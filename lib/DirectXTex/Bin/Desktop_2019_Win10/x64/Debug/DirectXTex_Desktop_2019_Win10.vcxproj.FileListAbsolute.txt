@@ -1,0 +1,3 @@
+C:\K020G1167\チーム制作\ゲーム大賞『感触』\_ソリューション\_DirectX\INTO_THE_ABYSS\lib\DirectXTex\Bin\Desktop_2019_Win10\x64\Debug\DirectXTex.lib
+C:\Users\cinch\OneDrive\ドキュメント\IntoTheAbyss\lib\DirectXTex\Bin\Desktop_2019_Win10\x64\Debug\DirectXTex.lib
+C:\K020G1167\個人\DirectX12\_Engine\KuroEngine3.0\lib\DirectXTex\Bin\Desktop_2019_Win10\x64\Debug\DirectXTex.lib
