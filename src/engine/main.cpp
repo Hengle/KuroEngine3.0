@@ -7,6 +7,7 @@
 #include"DrawFunc.h"
 #include"DrawFunc_Shadow.h"
 #include"DrawFunc_FillTex.h"
+#include"DrawFunc_Mask.h"
 
 
 #ifdef _DEBUG
@@ -56,6 +57,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		DrawFunc::CountReset();
 		DrawFunc_Shadow::CountReset();
 		DrawFunc_FillTex::CountReset();
+		DrawFunc_Mask::CountReset();
 
 		//メッセージがある？
 		MSG msg{};
