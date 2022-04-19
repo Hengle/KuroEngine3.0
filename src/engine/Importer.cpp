@@ -4,9 +4,8 @@
 #include"Model.h"
 #include"D3D12App.h"
 
-void Importer::ErrorMessage(const std::string& FuncName, const bool& Fail, const std::string& Comment, void (Importer::*Func)())
+void Importer::ErrorMessage(const std::string& FuncName, const bool& Fail, const std::string& Comment)
 {
-	if (Fail && Func != nullptr)Func;
 	KuroFunc::ErrorMessage(Fail, "Importer", FuncName, Comment);
 }
 
@@ -407,11 +406,11 @@ std::shared_ptr<Model> Importer::CheckAlreadyExsit(const std::string& Dir, const
 	}
 }
 
-std::shared_ptr<Model> Importer::LoadHSMModel(const std::string& Path)
+std::shared_ptr<Model> Importer::LoadHSMModel(const std::string& Dir, const std::string& FileName, const std::string& Path)
 {
 	static const std::string FUNC_NAME = "LoadHSMModel";
 	static const std::string MSG_TAIL = "の読み取りに失敗\n";
-	std::shared_ptr<Model>model = std::make_shared<Model>();
+	std::shared_ptr<Model>model = std::make_shared<Model>(Dir, FileName);
 
 	FILE* fp;
 	fopen_s(&fp, Path.c_str(), "rb");
@@ -607,11 +606,11 @@ Importer::Importer()
 
 	//IOSettingを生成
 	ioSettings = FbxIOSettings::Create(fbxManager, IOSROOT);
-	ErrorMessage(FUNC_NAME, ioSettings == nullptr, "FBXIOSetting生成に失敗\n", FbxDeviceDestroy);
+	ErrorMessage(FUNC_NAME, ioSettings == nullptr, "FBXIOSetting生成に失敗\n");
 
 	//インポータ生成
 	fbxImporter = FbxImporter::Create(fbxManager, "");
-	ErrorMessage(FUNC_NAME, fbxImporter == nullptr, "FBXインポータ生成に失敗\n", FbxDeviceDestroy);
+	ErrorMessage(FUNC_NAME, fbxImporter == nullptr, "FBXインポータ生成に失敗\n");
 }
 
 std::shared_ptr<Model> Importer::LoadFBXModel(const std::string& Dir, const std::string& FileName)
@@ -663,7 +662,7 @@ std::shared_ptr<Model> Importer::LoadFBXModel(const std::string& Dir, const std:
 		if (modelLastWriteTime.dwHighDateTime == fbxLastWriteTime.dwHighDateTime
 			&& modelLastWriteTime.dwLowDateTime == fbxLastWriteTime.dwLowDateTime)
 		{
-			return LoadHSMModel(hsmPath);
+			return LoadHSMModel(Dir, FileName, hsmPath);
 		}
 	}
 
@@ -672,27 +671,15 @@ std::shared_ptr<Model> Importer::LoadFBXModel(const std::string& Dir, const std:
 	//ファイルの存在を確認
 	ErrorMessage(FUNC_NAME, !KuroFunc::ExistFile(path), "ファイルが存在しません\n");
 
-	//FBXファイルの最終更新日時を読み取る
-	FILETIME fbxLastWriteTime;
-	HANDLE fbxFile = CreateFile(
-		KuroFunc::GetWideStrFromStr(path).c_str(),
-		0,
-		0,
-		NULL,
-		OPEN_EXISTING,
-		FILE_ATTRIBUTE_NORMAL,
-		NULL);
-	ErrorMessage(FUNC_NAME, GetFileTime(fbxFile, NULL, NULL, &fbxLastWriteTime) == 0, "FBXファイルの最終更新日時取得に失敗\n");
-
 	//ファイルを初期化する
-	ErrorMessage(FUNC_NAME, fbxImporter->Initialize(path.c_str(), -1, fbxManager->GetIOSettings()) == false, "ファイルの初期化に失敗\n", FbxDeviceDestroy);
+	ErrorMessage(FUNC_NAME, fbxImporter->Initialize(path.c_str(), -1, fbxManager->GetIOSettings()) == false, "ファイルの初期化に失敗\n");
 
 	//シーンオブジェクト生成
 	FbxScene* fbxScene = FbxScene::Create(fbxManager, "scene");
-	ErrorMessage(FUNC_NAME, fbxScene == nullptr, "FBXシーン生成に失敗\n", FbxDeviceDestroy);
+	ErrorMessage(FUNC_NAME, fbxScene == nullptr, "FBXシーン生成に失敗\n");
 
 	//シーンオブジェクトにfbxファイル内の情報を流し込む
-	ErrorMessage(FUNC_NAME, fbxImporter->Import(fbxScene) == false, "FBXシーンへのFBXファイル情報流し込みに失敗\n", FbxDeviceDestroy);
+	ErrorMessage(FUNC_NAME, fbxImporter->Import(fbxScene) == false, "FBXシーンへのFBXファイル情報流し込みに失敗\n");
 
 	//シーン内のノードのポリゴンを全て三角形にする
 	FbxGeometryConverter converter(fbxManager);

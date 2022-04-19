@@ -93,7 +93,7 @@ private:
 public:
 	D3D12App(const HWND& Hwnd, const Vec2<int>& ScreenSize, const bool& UseHDR, const Color& ClearValue, const bool& IsFullScreen = false)
 	{
-		KuroFunc::ErrorMessage(INSTANCE == nullptr, "D3D12App", "コンストラクタ", "既にインスタンスが生成済です\n");
+		KuroFunc::ErrorMessage(INSTANCE != nullptr, "D3D12App", "コンストラクタ", "既にインスタンスが生成済です\n");
 		INSTANCE = this;
 		Initialize(Hwnd, ScreenSize, UseHDR, ClearValue, IsFullScreen);
 	}

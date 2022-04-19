@@ -1,4 +1,5 @@
 #pragma once
+#include"KuroEngine.h"
 class GameScene : public BaseScene
 {
 

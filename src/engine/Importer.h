@@ -16,7 +16,7 @@ class Importer : public Singleton<Importer>
 	using Vertex = ModelMesh::Vertex_Model;
 
 	//エラーメッセージ表示
-	void ErrorMessage(const std::string& FuncName, const bool& Fail, const std::string& Comment, void (Importer::*Func)() = nullptr);
+	void ErrorMessage(const std::string& FuncName, const bool& Fail, const std::string& Comment);
 	//HSMロードで用いるデータの読み取り関数（成功すればtrueを返す)
 	bool LoadData(FILE* Fp, void* Data, const size_t& Size, const int& ElementNum);
 	//HSMセーブで用いるデータの書き込み関数（成功すればtrueを返す)
@@ -59,7 +59,7 @@ class Importer : public Singleton<Importer>
 	std::shared_ptr<Model> CheckAlreadyExsit(const std::string& Dir, const std::string& FileName);
 
 	//HSMはエンジン専用の多種モデルとの仲介役（他のフォーマット読み込みは時間コストが高い？）
-	std::shared_ptr<Model>LoadHSMModel(const std::string& Path);
+	std::shared_ptr<Model>LoadHSMModel(const std::string& Dir, const std::string& FileName, const std::string& HSMPath);
 	void SaveHSMModel(const std::string& FileNameTail, std::shared_ptr<Model>Model, const FILETIME& LastWriteTime);
 
 	//HSMが存在する場合をHSMから読み込めるようにするか(HSMのフォーマットが変わったときはフラグをオフにする)
