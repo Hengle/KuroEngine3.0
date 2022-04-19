@@ -36,7 +36,7 @@ private:
 public:
 	static D3D12App* Instance()
 	{
-		if (INSTANCE == nullptr)ASSERT_MSG("D3D12Appのインスタンスを呼び出そうとしましたがnullptrでした\n");
+		KuroFunc::ErrorMessage(INSTANCE == nullptr, "D3D12App", "シングルトンインスタンス", "インスタンスがnullptrでした\n");
 		return INSTANCE;
 	}
 
@@ -93,7 +93,7 @@ private:
 public:
 	D3D12App(const HWND& Hwnd, const Vec2<int>& ScreenSize, const bool& UseHDR, const Color& ClearValue, const bool& IsFullScreen = false)
 	{
-		if (INSTANCE != nullptr)ASSERT_MSG("既にインスタンスがあります。D3D12Appは１つのインスタンスしか持てません\n");
+		KuroFunc::ErrorMessage(INSTANCE == nullptr, "D3D12App", "コンストラクタ", "既にインスタンスが生成済です\n");
 		INSTANCE = this;
 		Initialize(Hwnd, ScreenSize, UseHDR, ClearValue, IsFullScreen);
 	}

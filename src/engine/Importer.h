@@ -1,0 +1,73 @@
+#pragma once
+#include"Singleton.h"
+#include<string>
+#include<fbxsdk.h>
+#include<vector>
+#include<memory>
+#include<map>
+#include<forward_list>
+#include"ModelMesh.h"
+#include"Skeleton.h"
+class Model;
+
+class Importer : public Singleton<Importer>
+{
+	//モデル専用頂点
+	using Vertex = ModelMesh::Vertex_Model;
+
+	//エラーメッセージ表示
+	void ErrorMessage(const std::string& FuncName, const bool& Fail, const std::string& Comment, void (Importer::*Func)() = nullptr);
+	//HSMロードで用いるデータの読み取り関数（成功すればtrueを返す)
+	bool LoadData(FILE* Fp, void* Data, const size_t& Size, const int& ElementNum);
+	//HSMセーブで用いるデータの書き込み関数（成功すればtrueを返す)
+	bool SaveData(FILE* Fp, const void* Data, const size_t& Size, const int& ElementNum);
+
+
+#pragma region FBX関連
+	struct FbxBoneAffect	//ボーンと頂点の関連を記録するためのクラス
+	{
+		signed short index;
+		float weight;
+	};
+	//ボーンが頂点に与える影響に関する情報テーブル
+	//< 頂点インデックス、情報(可変長、４個まで)>
+	//５つ以上読み込まれていた場合、頂点読み込み時に無視される
+	using BoneTable = std::map<int, std::forward_list<FbxBoneAffect>>;
+
+	FbxManager* fbxManager = nullptr;
+	FbxIOSettings* ioSettings = nullptr;
+	FbxImporter* fbxImporter = nullptr;
+
+	//FBX関連デバイスの削除処理
+	void FbxDeviceDestroy();
+	//FbxMeshを辿って配列として保存
+	void TraceFbxMesh(FbxNode* Node, std::vector<FbxMesh*>* Mesh);
+	//FbxMatrixをXMMATRIXに変換
+	XMMATRIX FbxMatrixConvert(const FbxMatrix& Mat);	
+	//各種モデル情報読み取り
+	void LoadFbxBone(FbxCluster* Cluster, const int& BoneIndex, BoneTable& BoneTable);
+	void LoadFbxSkin(Skeleton& Skel, FbxMesh* FbxMesh, BoneTable& BoneTable);
+	void SetBoneAffectToVertex(Vertex& Vertex, const int& VertexIdx, BoneTable& BoneTable);	//頂点に対応ボーン情報格納
+	void LoadFbxVertex(ModelMesh& ModelMesh, FbxMesh* FbxMesh, BoneTable& BoneTable);
+	void LoadFbxIndex(ModelMesh& ModelMesh, FbxMesh* FbxMesh);
+	std::string GetFileName(std::string FbxRelativeFileName);
+	void LoadFbxMaterial(const std::string& Dir, ModelMesh& ModelMesh, FbxMesh* FbxMesh);
+#pragma endregion
+
+	//インポートしたモデル
+	std::map<std::string, std::shared_ptr<Model>>models;
+	std::shared_ptr<Model> CheckAlreadyExsit(const std::string& Dir, const std::string& FileName);
+
+	//HSMはエンジン専用の多種モデルとの仲介役（他のフォーマット読み込みは時間コストが高い？）
+	std::shared_ptr<Model>LoadHSMModel(const std::string& Path);
+	void SaveHSMModel(const std::string& FileNameTail, std::shared_ptr<Model>Model, const FILETIME& LastWriteTime);
+
+	//HSMが存在する場合をHSMから読み込めるようにするか(HSMのフォーマットが変わったときはフラグをオフにする)
+	const bool canLoadHSM = true;
+
+	Importer();
+public:
+	~Importer() { FbxDeviceDestroy(); }
+	std::shared_ptr<Model> LoadFBXModel(const std::string& Dir, const std::string& FileName);
+};
+

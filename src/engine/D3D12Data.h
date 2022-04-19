@@ -5,8 +5,7 @@
 #include<wrl.h>
 #include <cassert>
 #include"Vec.h"
-
-#define ASSERT_MSG(msg) {printf("%s", msg); assert(0);}
+#include"KuroFunc.h"
 
 static const enum DESC_HANDLE_TYPE { CBV, SRV, UAV, RTV, DSV, DESC_HANDLE_NUM };
 
@@ -26,12 +25,12 @@ public:
 	DescHandles() {}
 	DescHandles(const DescHandles& tmp)
 	{
-		if (!tmp)ASSERT_MSG("コピーコンストラクタが呼び出されましたが、コピー元の初期化がされていません\n");
+		KuroFunc::ErrorMessage(!tmp, "DescHandles", "コピーコンストラクタ", "コピー元の初期化がされていません\n");
 		Initialize(tmp.cpuHandle, tmp.gpuHandle);
 	}
 	DescHandles(DescHandles&& tmp)
 	{
-		if (!tmp)ASSERT_MSG("ムーブコンストラクタが呼び出されましたが、ムーブ元の初期化がされていません\n");
+		KuroFunc::ErrorMessage(!tmp, "DescHandles", "ムーブコンストラクタ", "ムーブ元の初期化がされていません\n");
 		Initialize(tmp.cpuHandle, tmp.gpuHandle);
 	}
 	DescHandles(const D3D12_CPU_DESCRIPTOR_HANDLE& CPUHandle, const D3D12_GPU_DESCRIPTOR_HANDLE& GPUHandle) { Initialize(CPUHandle, GPUHandle); }
@@ -49,7 +48,7 @@ public:
 	//代入演算子
 	void operator=(const DescHandles& rhs)
 	{
-		if (rhs.invalid)ASSERT_MSG("代入演算子が呼び出されましたが、代入するディスクリプタハンドルが初期化されていません\n");
+		KuroFunc::ErrorMessage(rhs.invalid, "DescHandles", "代入演算子", "代入するディスクリプタハンドルが初期化されていません\n");
 		cpuHandle = rhs.cpuHandle;
 		gpuHandle = rhs.gpuHandle;
 		invalid = false;
@@ -57,22 +56,22 @@ public:
 
 	operator const D3D12_CPU_DESCRIPTOR_HANDLE& ()const
 	{
-		if (invalid)ASSERT_MSG("CPUディスクリプタハンドルを取得しようとしましたが、初期化されていません\n");
+		KuroFunc::ErrorMessage(invalid, "DescHandles", "operatorゲッタ", "初期化されていません\n");
 		return cpuHandle;
 	}
 	operator const D3D12_CPU_DESCRIPTOR_HANDLE* ()const
 	{
-		if (invalid)ASSERT_MSG("CPUディスクリプタハンドルのポインタを取得しようとしましたが、初期化されていません\n");
+		KuroFunc::ErrorMessage(invalid, "DescHandles", "operatorゲッタ", "初期化されていません\n");
 		return &cpuHandle;
 	}
 	operator const D3D12_GPU_DESCRIPTOR_HANDLE& ()const
 	{
-		if (invalid)ASSERT_MSG("GPUディスクリプタハンドルを取得しようとしましたが、初期化されていません\n");
+		KuroFunc::ErrorMessage(invalid, "DescHandles", "operatorゲッタ", "初期化されていません\n");
 		return gpuHandle;
 	}
 	operator const D3D12_GPU_DESCRIPTOR_HANDLE* ()const
 	{
-		if (invalid)ASSERT_MSG("GPUディスクリプタハンドルのポインタを取得しようとしましたが、初期化されていません\n");
+		KuroFunc::ErrorMessage(invalid, "DescHandles", "operatorゲッタ", "初期化されていません\n");
 		return &gpuHandle;
 	}
 };
@@ -418,7 +417,7 @@ public:
 	//読み取り専用構造化バッファ取得
 	std::weak_ptr<RWStructuredBuffer>GetRWStructuredBuff()
 	{
-		if (!rwBuff)ASSERT_MSG("頂点バッファの描き込み用構造化バッファは未生成です\n");
+		KuroFunc::ErrorMessage(!rwBuff, "VertexBuffer", "GetRWStructuredBuff", "頂点バッファの描き込み用構造化バッファは未生成です\n");
 		return rwBuff;
 	}
 	//頂点バッファとして使うためにリソースバリア変更
@@ -507,7 +506,7 @@ public:
 	}
 	RootParam(const DESC_HANDLE_TYPE& ViewType, const char* Comment = nullptr)
 		:viewType(ViewType) {
-		if (viewType == RTV || viewType == DSV)ASSERT_MSG("ルートパラメータで RTV / DSV は設定できません\n");
+		KuroFunc::ErrorMessage(viewType == RTV || viewType == DSV, "RootParam", "コンストラクタ", "ルートパラメータで RTV / DSV は設定できません\n");
 		if (Comment != nullptr)comment = Comment;
 	}
 };
