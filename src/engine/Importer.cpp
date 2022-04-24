@@ -394,6 +394,89 @@ void Importer::LoadFbxMaterial(const std::string& Dir, ModelMesh& ModelMesh, Fbx
 	}
 }
 
+void Importer::TraceBoneAnim(Skeleton::ModelAnimation& ModelAnimation, FbxNode* FbxNode, FbxAnimLayer* FbxAnimLayer)
+{
+	auto attribute = FbxNode->GetNodeAttribute();
+
+	//ボーンのアニメーションしか読み込まない
+	if (attribute && attribute->GetAttributeType() == FbxNodeAttribute::eSkeleton)
+	{
+		std::string boneName = FbxNode->GetName();
+
+		//ボーン単位アニメーション取得
+		auto& boneAnim = ModelAnimation.boneAnim[boneName];
+
+		FbxAnimCurve* animCurve;
+
+		//座標
+		animCurve = FbxNode->LclTranslation.GetCurve(FbxAnimLayer, FBXSDK_CURVENODE_COMPONENT_X);
+		if (animCurve)LoadAnimCurve(animCurve, boneAnim.pos[Skeleton::BoneAnimation::X]);
+
+		animCurve = FbxNode->LclTranslation.GetCurve(FbxAnimLayer, FBXSDK_CURVENODE_COMPONENT_Y);
+		if (animCurve)	LoadAnimCurve(animCurve, boneAnim.pos[Skeleton::BoneAnimation::Y]);
+
+		animCurve = FbxNode->LclTranslation.GetCurve(FbxAnimLayer, FBXSDK_CURVENODE_COMPONENT_Z);
+		if (animCurve)	LoadAnimCurve(animCurve, boneAnim.pos[Skeleton::BoneAnimation::Z]);
+
+		//回転
+		animCurve = FbxNode->LclRotation.GetCurve(FbxAnimLayer, FBXSDK_CURVENODE_COMPONENT_X);
+		if (animCurve)LoadAnimCurve(animCurve, boneAnim.rotate[Skeleton::BoneAnimation::X]);
+
+		animCurve = FbxNode->LclRotation.GetCurve(FbxAnimLayer, FBXSDK_CURVENODE_COMPONENT_Y);
+		if (animCurve)	LoadAnimCurve(animCurve, boneAnim.rotate[Skeleton::BoneAnimation::Y]);
+
+		animCurve = FbxNode->LclRotation.GetCurve(FbxAnimLayer, FBXSDK_CURVENODE_COMPONENT_Z);
+		if (animCurve)	LoadAnimCurve(animCurve, boneAnim.rotate[Skeleton::BoneAnimation::Z]);
+
+		//スケール
+		animCurve = FbxNode->LclScaling.GetCurve(FbxAnimLayer, FBXSDK_CURVENODE_COMPONENT_X);
+		if (animCurve)LoadAnimCurve(animCurve, boneAnim.scale[Skeleton::BoneAnimation::X]);
+
+		animCurve = FbxNode->LclScaling.GetCurve(FbxAnimLayer, FBXSDK_CURVENODE_COMPONENT_Y);
+		if (animCurve)	LoadAnimCurve(animCurve, boneAnim.scale[Skeleton::BoneAnimation::Y]);
+
+		animCurve = FbxNode->LclScaling.GetCurve(FbxAnimLayer, FBXSDK_CURVENODE_COMPONENT_Z);
+		if (animCurve)	LoadAnimCurve(animCurve, boneAnim.scale[Skeleton::BoneAnimation::Z]);
+	}
+
+	// 子ノードに対して再帰呼び出し
+	for (int i = 0; i < FbxNode->GetChildCount(); i++) {
+		TraceBoneAnim(ModelAnimation, FbxNode->GetChild(i), FbxAnimLayer);
+	}
+}
+
+void Importer::LoadAnimCurve(FbxAnimCurve* FbxAnimCurve, Animation& Animation)
+{
+	FbxTimeSpan interval;
+
+	static const auto ONE_FRAME_VALUE = FbxTime::GetOneFrameValue(FbxTime::eFrames60);
+
+
+	if (FbxAnimCurve->GetTimeInterval(interval)) {
+		FbxLongLong start = interval.GetStart().Get();
+		FbxLongLong end = interval.GetStop().Get();
+		Animation.startFrame = start / ONE_FRAME_VALUE;
+		Animation.endFrame =  end / ONE_FRAME_VALUE;
+	}
+
+	int lKeyCount = FbxAnimCurve->KeyGetCount();
+
+	int lCount;
+
+	for (lCount = 0; lCount < lKeyCount; lCount++)
+	{
+		float lKeyValue = static_cast<float>(FbxAnimCurve->KeyGetValue(lCount));
+		FbxTime lKeyTime = FbxAnimCurve->KeyGetTime(lCount);
+
+		KeyFrame keyFrame{};
+
+		keyFrame.frame = lKeyTime.Get() / ONE_FRAME_VALUE;
+		keyFrame.value = lKeyValue;
+
+		Animation.keyFrames.emplace_back(keyFrame);
+	}
+}
+
 std::shared_ptr<Model> Importer::CheckAlreadyExsit(const std::string& Dir, const std::string& FileName)
 {
 	//生成済
@@ -747,10 +830,35 @@ std::shared_ptr<Model> Importer::LoadFBXModel(const std::string& Dir, const std:
 		result->meshes.emplace_back(mesh);
 	}
 
+	//アニメーションの数
+	int animStackCount = fbxImporter->GetAnimStackCount();
+	for (int animIdx = 0; animIdx < animStackCount; ++animIdx)
+	{
+		Skeleton::ModelAnimation animation;
+
+		// AnimStack読み込み（AnimLayerの集合)
+		FbxAnimStack* animStack = fbxScene->GetSrcObject<FbxAnimStack>(animIdx);
+		animation.name = animStack->GetName();	//アニメーション名取得
+
+		FbxAnimLayer* animLayer = animStack->GetMember<FbxAnimLayer>(0);
+		TraceBoneAnim(animation, fbxScene->GetRootNode(), animLayer);
+
+		skel.animations.emplace_back(animation);
+
+		////アニメーションが割り当てられている”部位”の数（AnimCurve の集合）
+		//int animLayersCount = animStack->GetMemberCount<FbxAnimLayer>();
+		//for (int i = 0; i < animLayersCount; ++i)
+		//{
+		//	FbxAnimLayer* animLayer = animStack->GetMember<FbxAnimLayer>(i);
+		//	std::string layerName = animLayer->GetName();
+		//	TraceBoneAnim(skel, fbxScene->GetRootNode(), animLayer);
+		//}
+	}
+
 	skel.CreateBoneTree();
 	result->skelton = skel;
 
-	SaveHSMModel(HSM_TAIL, result, fbxLastWriteTime);
+	//SaveHSMModel(HSM_TAIL, result, fbxLastWriteTime);
 
 	RegisterImportModel(Dir, FileName, result);
 

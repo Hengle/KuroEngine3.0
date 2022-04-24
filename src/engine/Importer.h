@@ -6,6 +6,7 @@
 #include<memory>
 #include<map>
 #include<forward_list>
+#include"Animation.h"
 #include"ModelMesh.h"
 #include"Skeleton.h"
 class Model;
@@ -54,6 +55,10 @@ class Importer : public Singleton<Importer>
 	void LoadFbxIndex(ModelMesh& ModelMesh, FbxMesh* FbxMesh);
 	std::string GetFileName(std::string FbxRelativeFileName);
 	void LoadFbxMaterial(const std::string& Dir, ModelMesh& ModelMesh, FbxMesh* FbxMesh);
+	//アニメーションレイヤーの追跡
+	void TraceBoneAnim(Skeleton::ModelAnimation& ModelAnimation, FbxNode* FbxNode, FbxAnimLayer* FbxAnimLayer);
+	void LoadAnimCurve(FbxAnimCurve* FbxAnimCurve, Animation& Animation);
+
 #pragma endregion
 
 	//インポートしたモデル
