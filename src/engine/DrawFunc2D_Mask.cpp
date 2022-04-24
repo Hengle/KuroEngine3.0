@@ -1,15 +1,15 @@
-#include "DrawFunc_Mask.h"
+#include "DrawFunc2D_Mask.h"
 #include"KuroEngine.h"
 
 //DrawExtendGraph
-std::shared_ptr<GraphicsPipeline>DrawFunc_Mask::EXTEND_GRAPH_PIPELINE;
-int DrawFunc_Mask::DRAW_EXTEND_GRAPH_COUNT = 0;
-std::vector<std::shared_ptr<VertexBuffer>>DrawFunc_Mask::EXTEND_GRAPH_VERTEX_BUFF;
+std::shared_ptr<GraphicsPipeline>DrawFunc2D_Mask::EXTEND_GRAPH_PIPELINE;
+int DrawFunc2D_Mask::DRAW_EXTEND_GRAPH_COUNT = 0;
+std::vector<std::shared_ptr<VertexBuffer>>DrawFunc2D_Mask::EXTEND_GRAPH_VERTEX_BUFF;
 
 //DrawRotaGraph
-std::shared_ptr<GraphicsPipeline>DrawFunc_Mask::ROTA_GRAPH_PIPELINE;
-int DrawFunc_Mask::DRAW_ROTA_GRAPH_COUNT = 0;
-std::vector<std::shared_ptr<VertexBuffer>>DrawFunc_Mask::ROTA_GRAPH_VERTEX_BUFF;
+std::shared_ptr<GraphicsPipeline>DrawFunc2D_Mask::ROTA_GRAPH_PIPELINE;
+int DrawFunc2D_Mask::DRAW_ROTA_GRAPH_COUNT = 0;
+std::vector<std::shared_ptr<VertexBuffer>>DrawFunc2D_Mask::ROTA_GRAPH_VERTEX_BUFF;
 
 static std::vector<RootParam>ROOT_PARAMETER =
 {
@@ -17,7 +17,7 @@ static std::vector<RootParam>ROOT_PARAMETER =
 	RootParam(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, "テクスチャリソース"),
 };
 
-void DrawFunc_Mask::CreateExtendGraphFunc()
+void DrawFunc2D_Mask::CreateExtendGraphFunc()
 {
 	//パイプライン未生成
 	if (!EXTEND_GRAPH_PIPELINE)
@@ -50,7 +50,7 @@ void DrawFunc_Mask::CreateExtendGraphFunc()
 	}
 }
 
-void DrawFunc_Mask::DrawGraph(const Vec2<float>& LeftUpPos, const std::shared_ptr<TextureBuffer>& Tex, const Vec2<float>& MaskLeftUpPos, const Vec2<float>& MaskRightBottomPos, const Vec2<bool>& Miror, const float& MaskAlpha)
+void DrawFunc2D_Mask::DrawGraph(const Vec2<float>& LeftUpPos, const std::shared_ptr<TextureBuffer>& Tex, const Vec2<float>& MaskLeftUpPos, const Vec2<float>& MaskRightBottomPos, const Vec2<bool>& Miror, const float& MaskAlpha)
 {
 	CreateExtendGraphFunc();
 
@@ -73,7 +73,7 @@ void DrawFunc_Mask::DrawGraph(const Vec2<float>& LeftUpPos, const std::shared_pt
 	DRAW_EXTEND_GRAPH_COUNT++;
 }
 
-void DrawFunc_Mask::DrawExtendGraph2D(const Vec2<float>& LeftUpPos, const Vec2<float>& RightBottomPos, const std::shared_ptr<TextureBuffer>& Tex, const Vec2<float>& MaskLeftUpPos, const Vec2<float>& MaskRightBottomPos, const Vec2<bool>& Miror, const float& MaskAlpha)
+void DrawFunc2D_Mask::DrawExtendGraph2D(const Vec2<float>& LeftUpPos, const Vec2<float>& RightBottomPos, const std::shared_ptr<TextureBuffer>& Tex, const Vec2<float>& MaskLeftUpPos, const Vec2<float>& MaskRightBottomPos, const Vec2<bool>& Miror, const float& MaskAlpha)
 {
 	CreateExtendGraphFunc();
 
@@ -93,7 +93,7 @@ void DrawFunc_Mask::DrawExtendGraph2D(const Vec2<float>& LeftUpPos, const Vec2<f
 	DRAW_EXTEND_GRAPH_COUNT++;
 }
 
-void DrawFunc_Mask::DrawRotaGraph2D(const Vec2<float>& Center, const Vec2<float>& ExtRate, const float& Radian, const std::shared_ptr<TextureBuffer>& Tex, const Vec2<float>& MaskCenterPos, const Vec2<float>& MaskSize, const Vec2<float>& RotaCenterUV, const Vec2<bool>& Miror, const float& MaskAlpha)
+void DrawFunc2D_Mask::DrawRotaGraph2D(const Vec2<float>& Center, const Vec2<float>& ExtRate, const float& Radian, const std::shared_ptr<TextureBuffer>& Tex, const Vec2<float>& MaskCenterPos, const Vec2<float>& MaskSize, const Vec2<float>& RotaCenterUV, const Vec2<bool>& Miror, const float& MaskAlpha)
 {
 	//DrawRotaGraph専用頂点
 	class RotaGraphVertex
@@ -164,7 +164,7 @@ void DrawFunc_Mask::DrawRotaGraph2D(const Vec2<float>& Center, const Vec2<float>
 }
 
 #include"KuroMath.h"
-void DrawFunc_Mask::DrawLine2DGraph(const Vec2<float>& FromPos, const Vec2<float>& ToPos, const std::shared_ptr<TextureBuffer>& Tex, const int& Thickness, const Vec2<float>& MaskLeftUpPos, const Vec2<float>& MaskRightBottomPos, const Vec2<bool>& Mirror)
+void DrawFunc2D_Mask::DrawLine2DGraph(const Vec2<float>& FromPos, const Vec2<float>& ToPos, const std::shared_ptr<TextureBuffer>& Tex, const int& Thickness, const Vec2<float>& MaskLeftUpPos, const Vec2<float>& MaskRightBottomPos, const Vec2<bool>& Mirror)
 {
 	float distance = FromPos.Distance(ToPos);
 	Vec2<float> vec = (ToPos - FromPos).GetNormal();

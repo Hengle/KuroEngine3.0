@@ -5,7 +5,7 @@
 #include"Vec.h"
 
 //描画範囲をマスク（範囲外は指定したアルファ値で描画）
-class DrawFunc_Mask
+class DrawFunc2D_Mask
 {
 	//DrawExtendGraph
 	class ExtendGraphVertex

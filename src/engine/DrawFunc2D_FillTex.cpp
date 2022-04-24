@@ -1,15 +1,15 @@
-#include "DrawFunc_FillTex.h"
+#include "DrawFunc2D_FillTex.h"
 #include"KuroEngine.h"
 
 //DrawExtendGraph
-std::shared_ptr<GraphicsPipeline>DrawFunc_FillTex::EXTEND_GRAPH_PIPELINE;
-int DrawFunc_FillTex::DRAW_EXTEND_GRAPH_COUNT = 0;
-std::vector<std::shared_ptr<VertexBuffer>>DrawFunc_FillTex::EXTEND_GRAPH_VERTEX_BUFF;
+std::shared_ptr<GraphicsPipeline>DrawFunc2D_FillTex::EXTEND_GRAPH_PIPELINE;
+int DrawFunc2D_FillTex::DRAW_EXTEND_GRAPH_COUNT = 0;
+std::vector<std::shared_ptr<VertexBuffer>>DrawFunc2D_FillTex::EXTEND_GRAPH_VERTEX_BUFF;
 
 //DrawRotaGraph
-std::shared_ptr<GraphicsPipeline>DrawFunc_FillTex::ROTA_GRAPH_PIPELINE;
-int DrawFunc_FillTex::DRAW_ROTA_GRAPH_COUNT = 0;
-std::vector<std::shared_ptr<VertexBuffer>>DrawFunc_FillTex::ROTA_GRAPH_VERTEX_BUFF;
+std::shared_ptr<GraphicsPipeline>DrawFunc2D_FillTex::ROTA_GRAPH_PIPELINE;
+int DrawFunc2D_FillTex::DRAW_ROTA_GRAPH_COUNT = 0;
+std::vector<std::shared_ptr<VertexBuffer>>DrawFunc2D_FillTex::ROTA_GRAPH_VERTEX_BUFF;
 
 static std::vector<RootParam>ROOT_PARAMETER =
 {
@@ -18,7 +18,7 @@ static std::vector<RootParam>ROOT_PARAMETER =
 	RootParam(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, "塗りつぶす用テクスチャリソース"),
 };
 
-void DrawFunc_FillTex::CreateExtendGraphFunc()
+void DrawFunc2D_FillTex::CreateExtendGraphFunc()
 {
 	//パイプライン未生成
 	if (!EXTEND_GRAPH_PIPELINE)
@@ -51,7 +51,7 @@ void DrawFunc_FillTex::CreateExtendGraphFunc()
 	}
 }
 
-void DrawFunc_FillTex::DrawGraph(const Vec2<float>& LeftUpPos, const std::shared_ptr<TextureBuffer>& DestTex, const std::shared_ptr<TextureBuffer>& SrcTex, 
+void DrawFunc2D_FillTex::DrawGraph(const Vec2<float>& LeftUpPos, const std::shared_ptr<TextureBuffer>& DestTex, const std::shared_ptr<TextureBuffer>& SrcTex, 
 	const float& SrcAlpha, const Vec2<bool>& Miror, const Vec2<float>& LeftUpPaintUV, const Vec2<float>& RightBottomPaintUV)
 {
 	CreateExtendGraphFunc();
@@ -75,7 +75,7 @@ void DrawFunc_FillTex::DrawGraph(const Vec2<float>& LeftUpPos, const std::shared
 	DRAW_EXTEND_GRAPH_COUNT++;
 }
 
-void DrawFunc_FillTex::DrawExtendGraph2D(const Vec2<float>& LeftUpPos, const Vec2<float>& RightBottomPos, const std::shared_ptr<TextureBuffer>& DestTex, const std::shared_ptr<TextureBuffer>& SrcTex,
+void DrawFunc2D_FillTex::DrawExtendGraph2D(const Vec2<float>& LeftUpPos, const Vec2<float>& RightBottomPos, const std::shared_ptr<TextureBuffer>& DestTex, const std::shared_ptr<TextureBuffer>& SrcTex,
 	const float& SrcAlpha, const Vec2<bool>& Miror, const Vec2<float>& LeftUpPaintUV, const Vec2<float>& RightBottomPaintUV)
 {
 	if (RightBottomPaintUV.x < LeftUpPaintUV.x)assert(0);
@@ -99,7 +99,7 @@ void DrawFunc_FillTex::DrawExtendGraph2D(const Vec2<float>& LeftUpPos, const Vec
 	DRAW_EXTEND_GRAPH_COUNT++;
 }
 
-void DrawFunc_FillTex::DrawRotaGraph2D(const Vec2<float>& Center, const Vec2<float>& ExtRate, const float& Radian, 
+void DrawFunc2D_FillTex::DrawRotaGraph2D(const Vec2<float>& Center, const Vec2<float>& ExtRate, const float& Radian, 
 	const std::shared_ptr<TextureBuffer>& DestTex, const std::shared_ptr<TextureBuffer>& SrcTex, const float& SrcAlpha,
 	const Vec2<float>& RotaCenterUV, const Vec2<bool>& Miror,	const Vec2<float>& LeftUpPaintUV, const Vec2<float>& RightBottomPaintUV)
 {

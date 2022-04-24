@@ -6,7 +6,7 @@
 #include"Color.h"
 #include<map>
 
-static class DrawFunc
+static class DrawFunc2D
 {
 	//DrawLine
 	static std::shared_ptr<GraphicsPipeline>LINE_PIPELINE[AlphaBlendModeNum];

@@ -1,32 +1,32 @@
-#include "DrawFunc.h"
+#include "DrawFunc2D.h"
 #include"KuroEngine.h"
 
 //DrawLine
-std::shared_ptr<GraphicsPipeline>DrawFunc::LINE_PIPELINE[AlphaBlendModeNum];
-int DrawFunc::DRAW_LINE_COUNT = 0;
-std::vector<std::shared_ptr<VertexBuffer>>DrawFunc::LINE_VERTEX_BUFF;
+std::shared_ptr<GraphicsPipeline>DrawFunc2D::LINE_PIPELINE[AlphaBlendModeNum];
+int DrawFunc2D::DRAW_LINE_COUNT = 0;
+std::vector<std::shared_ptr<VertexBuffer>>DrawFunc2D::LINE_VERTEX_BUFF;
 
 //DrawBox
-std::map<DXGI_FORMAT, std::map<AlphaBlendMode, std::shared_ptr<GraphicsPipeline>>>DrawFunc::BOX_PIPELINE;
-int DrawFunc::DRAW_BOX_COUNT = 0;
-std::vector<std::shared_ptr<VertexBuffer>>DrawFunc::BOX_VERTEX_BUFF;
+std::map<DXGI_FORMAT, std::map<AlphaBlendMode, std::shared_ptr<GraphicsPipeline>>>DrawFunc2D::BOX_PIPELINE;
+int DrawFunc2D::DRAW_BOX_COUNT = 0;
+std::vector<std::shared_ptr<VertexBuffer>>DrawFunc2D::BOX_VERTEX_BUFF;
 
 //DrawCircle
-std::shared_ptr<GraphicsPipeline>DrawFunc::CIRCLE_PIPELINE[AlphaBlendModeNum];
-int DrawFunc::DRAW_CIRCLE_COUNT = 0;
-std::vector<std::shared_ptr<VertexBuffer>>DrawFunc::CIRCLE_VERTEX_BUFF;
+std::shared_ptr<GraphicsPipeline>DrawFunc2D::CIRCLE_PIPELINE[AlphaBlendModeNum];
+int DrawFunc2D::DRAW_CIRCLE_COUNT = 0;
+std::vector<std::shared_ptr<VertexBuffer>>DrawFunc2D::CIRCLE_VERTEX_BUFF;
 
 //DrawExtendGraph
-std::shared_ptr<GraphicsPipeline>DrawFunc::EXTEND_GRAPH_PIPELINE[AlphaBlendModeNum];
-int DrawFunc::DRAW_EXTEND_GRAPH_COUNT = 0;
-std::vector<std::shared_ptr<VertexBuffer>>DrawFunc::EXTEND_GRAPH_VERTEX_BUFF;
+std::shared_ptr<GraphicsPipeline>DrawFunc2D::EXTEND_GRAPH_PIPELINE[AlphaBlendModeNum];
+int DrawFunc2D::DRAW_EXTEND_GRAPH_COUNT = 0;
+std::vector<std::shared_ptr<VertexBuffer>>DrawFunc2D::EXTEND_GRAPH_VERTEX_BUFF;
 
 //DrawRotaGraph
-std::shared_ptr<GraphicsPipeline>DrawFunc::ROTA_GRAPH_PIPELINE[AlphaBlendModeNum];
-int DrawFunc::DRAW_ROTA_GRAPH_COUNT = 0;
-std::vector<std::shared_ptr<VertexBuffer>>DrawFunc::ROTA_GRAPH_VERTEX_BUFF;
+std::shared_ptr<GraphicsPipeline>DrawFunc2D::ROTA_GRAPH_PIPELINE[AlphaBlendModeNum];
+int DrawFunc2D::DRAW_ROTA_GRAPH_COUNT = 0;
+std::vector<std::shared_ptr<VertexBuffer>>DrawFunc2D::ROTA_GRAPH_VERTEX_BUFF;
 
-void DrawFunc::DrawLine2D(const Vec2<float>& FromPos, const Vec2<float>& ToPos, const Color& LineColor, const AlphaBlendMode& BlendMode)
+void DrawFunc2D::DrawLine2D(const Vec2<float>& FromPos, const Vec2<float>& ToPos, const Color& LineColor, const AlphaBlendMode& BlendMode)
 {
 	//DrawLine専用頂点
 	class LineVertex
@@ -90,7 +90,7 @@ void DrawFunc::DrawLine2D(const Vec2<float>& FromPos, const Vec2<float>& ToPos, 
 	DRAW_LINE_COUNT++;
 }
 
-void DrawFunc::DrawLine2DGraph(const Vec2<float>& FromPos, const Vec2<float>& ToPos, const std::shared_ptr<TextureBuffer>& Tex, const int& Thickness, const AlphaBlendMode& BlendMode, const Vec2<bool>& Mirror)
+void DrawFunc2D::DrawLine2DGraph(const Vec2<float>& FromPos, const Vec2<float>& ToPos, const std::shared_ptr<TextureBuffer>& Tex, const int& Thickness, const AlphaBlendMode& BlendMode, const Vec2<bool>& Mirror)
 {
 	float distance = FromPos.Distance(ToPos);
 	Vec2<float> vec = (ToPos - FromPos).GetNormal();
@@ -103,7 +103,7 @@ void DrawFunc::DrawLine2DGraph(const Vec2<float>& FromPos, const Vec2<float>& To
 }
 
 
-void DrawFunc::DrawBox2D(const Vec2<float>& LeftUpPos, const Vec2<float>& RightBottomPos, const Color& BoxColor, const DXGI_FORMAT& Format, const bool& FillFlg, const AlphaBlendMode& BlendMode)
+void DrawFunc2D::DrawBox2D(const Vec2<float>& LeftUpPos, const Vec2<float>& RightBottomPos, const Color& BoxColor, const DXGI_FORMAT& Format, const bool& FillFlg, const AlphaBlendMode& BlendMode)
 {
 	if (FillFlg)
 	{
@@ -184,7 +184,7 @@ void DrawFunc::DrawBox2D(const Vec2<float>& LeftUpPos, const Vec2<float>& RightB
 	}
 }
 
-void DrawFunc::DrawCircle2D(const Vec2<float>& Center, const float& Radius, const Color& CircleColor, const bool& FillFlg, const int& LineThickness, const AlphaBlendMode& BlendMode)
+void DrawFunc2D::DrawCircle2D(const Vec2<float>& Center, const float& Radius, const Color& CircleColor, const bool& FillFlg, const int& LineThickness, const AlphaBlendMode& BlendMode)
 {
 	//DrawCircle専用頂点
 	class CircleVertex
@@ -254,13 +254,13 @@ void DrawFunc::DrawCircle2D(const Vec2<float>& Center, const float& Radius, cons
 	DRAW_CIRCLE_COUNT++;
 }
 
-void DrawFunc::DrawGraph(const Vec2<float>& LeftUpPos, const std::shared_ptr<TextureBuffer>& Tex, const AlphaBlendMode& BlendMode, const Vec2<bool>& Miror)
+void DrawFunc2D::DrawGraph(const Vec2<float>& LeftUpPos, const std::shared_ptr<TextureBuffer>& Tex, const AlphaBlendMode& BlendMode, const Vec2<bool>& Miror)
 {
 	auto graphSize = Tex->GetGraphSize();
 	DrawExtendGraph2D(LeftUpPos, LeftUpPos + graphSize.Float(), Tex, BlendMode, Miror);
 }
 
-void DrawFunc::DrawExtendGraph2D(const Vec2<float>& LeftUpPos, const Vec2<float>& RightBottomPos, const std::shared_ptr<TextureBuffer>& Tex, const AlphaBlendMode& BlendMode, const Vec2<bool>& Miror)
+void DrawFunc2D::DrawExtendGraph2D(const Vec2<float>& LeftUpPos, const Vec2<float>& RightBottomPos, const std::shared_ptr<TextureBuffer>& Tex, const AlphaBlendMode& BlendMode, const Vec2<bool>& Miror)
 {
 	//DrawExtendGraph専用頂点
 	class ExtendGraphVertex
@@ -325,7 +325,7 @@ void DrawFunc::DrawExtendGraph2D(const Vec2<float>& LeftUpPos, const Vec2<float>
 	DRAW_EXTEND_GRAPH_COUNT++;
 }
 
-void DrawFunc::DrawRotaGraph2D(const Vec2<float>& Center, const Vec2<float>& ExtRate, const float& Radian,
+void DrawFunc2D::DrawRotaGraph2D(const Vec2<float>& Center, const Vec2<float>& ExtRate, const float& Radian,
 	const std::shared_ptr<TextureBuffer>& Tex, const Vec2<float>& RotaCenterUV, const AlphaBlendMode& BlendMode, const Vec2<bool>& Miror)
 {
 	//DrawRotaGraph専用頂点

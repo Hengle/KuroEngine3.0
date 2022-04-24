@@ -1,21 +1,21 @@
-#include "DrawFunc_Shadow.h"
+#include "DrawFunc2D_Shadow.h"
 #include"KuroEngine.h"
 #include"LightManager.h"
 
-std::shared_ptr<ConstantBuffer>DrawFunc_Shadow::EYE_POS_BUFF;
-std::shared_ptr<TextureBuffer>DrawFunc_Shadow::DEFAULT_TEX;
-std::shared_ptr<TextureBuffer>DrawFunc_Shadow::DEFAULT_NORMAL_MAP;
-std::shared_ptr<TextureBuffer>DrawFunc_Shadow::DEFAULT_EMISSIVE_MAP;
+std::shared_ptr<ConstantBuffer>DrawFunc2D_Shadow::EYE_POS_BUFF;
+std::shared_ptr<TextureBuffer>DrawFunc2D_Shadow::DEFAULT_TEX;
+std::shared_ptr<TextureBuffer>DrawFunc2D_Shadow::DEFAULT_NORMAL_MAP;
+std::shared_ptr<TextureBuffer>DrawFunc2D_Shadow::DEFAULT_EMISSIVE_MAP;
 
 //DrawExtendGraph
-std::shared_ptr<GraphicsPipeline>DrawFunc_Shadow::EXTEND_GRAPH_PIPELINE;
-int DrawFunc_Shadow::DRAW_EXTEND_GRAPH_COUNT = 0;
-std::vector<std::shared_ptr<VertexBuffer>>DrawFunc_Shadow::EXTEND_GRAPH_VERTEX_BUFF;
+std::shared_ptr<GraphicsPipeline>DrawFunc2D_Shadow::EXTEND_GRAPH_PIPELINE;
+int DrawFunc2D_Shadow::DRAW_EXTEND_GRAPH_COUNT = 0;
+std::vector<std::shared_ptr<VertexBuffer>>DrawFunc2D_Shadow::EXTEND_GRAPH_VERTEX_BUFF;
 
 //DrawRotaGraph
-std::shared_ptr<GraphicsPipeline>DrawFunc_Shadow::ROTA_GRAPH_PIPELINE;
-int DrawFunc_Shadow::DRAW_ROTA_GRAPH_COUNT = 0;
-std::vector<std::shared_ptr<VertexBuffer>>DrawFunc_Shadow::ROTA_GRAPH_VERTEX_BUFF;
+std::shared_ptr<GraphicsPipeline>DrawFunc2D_Shadow::ROTA_GRAPH_PIPELINE;
+int DrawFunc2D_Shadow::DRAW_ROTA_GRAPH_COUNT = 0;
+std::vector<std::shared_ptr<VertexBuffer>>DrawFunc2D_Shadow::ROTA_GRAPH_VERTEX_BUFF;
 
 static std::vector<RootParam>ROOT_PARAMETER =
 {
@@ -31,7 +31,7 @@ static std::vector<RootParam>ROOT_PARAMETER =
 		RootParam(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, "放射マップ")
 };
 
-void DrawFunc_Shadow::StaticInit()
+void DrawFunc2D_Shadow::StaticInit()
 {
 	if (EYE_POS_BUFF)return;
 
@@ -49,12 +49,12 @@ void DrawFunc_Shadow::StaticInit()
 	DEFAULT_EMISSIVE_MAP = D3D12App::Instance()->GenerateTextureBuffer(Color(0.0f, 0.0f, 0.0f, 1.0f));
 }
 
-void DrawFunc_Shadow::SetEyePos(Vec3<float> EyePos)
+void DrawFunc2D_Shadow::SetEyePos(Vec3<float> EyePos)
 {
 	EYE_POS_BUFF->Mapping(&EyePos);
 }
 
-void DrawFunc_Shadow::DrawExtendGraph2D(LightManager& LigManager, const Vec2<float>& LeftUpPos, const Vec2<float>& RightBottomPos, const std::shared_ptr<TextureBuffer>& Tex, const std::shared_ptr<TextureBuffer>& NormalMap, const std::shared_ptr<TextureBuffer>& EmissiveMap, const float& SpriteDepth, const Vec2<bool>& Miror, const float& Diffuse, const float& Specular, const float& Lim)
+void DrawFunc2D_Shadow::DrawExtendGraph2D(LightManager& LigManager, const Vec2<float>& LeftUpPos, const Vec2<float>& RightBottomPos, const std::shared_ptr<TextureBuffer>& Tex, const std::shared_ptr<TextureBuffer>& NormalMap, const std::shared_ptr<TextureBuffer>& EmissiveMap, const float& SpriteDepth, const Vec2<bool>& Miror, const float& Diffuse, const float& Specular, const float& Lim)
 {
 	//DrawExtendGraph専用頂点
 	class ExtendGraphVertex
@@ -142,7 +142,7 @@ void DrawFunc_Shadow::DrawExtendGraph2D(LightManager& LigManager, const Vec2<flo
 	DRAW_EXTEND_GRAPH_COUNT++;
 }
 
-void DrawFunc_Shadow::DrawRotaGraph2D(LightManager& LigManager, const Vec2<float>& Center, const Vec2<float>& ExtRate, const float& Radian, const std::shared_ptr<TextureBuffer>& Tex, const std::shared_ptr<TextureBuffer>& NormalMap, const std::shared_ptr<TextureBuffer>& EmissiveMap, const float& SpriteDepth, const Vec2<float>& RotaCenterUV, const Vec2<bool>& Miror, const float& Diffuse, const float& Specular, const float& Lim)
+void DrawFunc2D_Shadow::DrawRotaGraph2D(LightManager& LigManager, const Vec2<float>& Center, const Vec2<float>& ExtRate, const float& Radian, const std::shared_ptr<TextureBuffer>& Tex, const std::shared_ptr<TextureBuffer>& NormalMap, const std::shared_ptr<TextureBuffer>& EmissiveMap, const float& SpriteDepth, const Vec2<float>& RotaCenterUV, const Vec2<bool>& Miror, const float& Diffuse, const float& Specular, const float& Lim)
 {
 	//DrawRotaGraph専用頂点
 	class RotaGraphVertex
