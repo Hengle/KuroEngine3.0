@@ -7,8 +7,6 @@
 class ModelMesh
 {
 public:
-	std::string name;
-
 	//モデル専用頂点クラス
 	class Vertex_Model
 	{

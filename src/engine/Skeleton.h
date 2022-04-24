@@ -7,6 +7,11 @@
 class Bone
 {
 public:
+	static size_t GetSizeWithOutName()
+	{
+		return sizeof(char) + sizeof(int) + sizeof(Vec3<float>) + sizeof(Matrix);
+	}
+
 	std::string name;
 	char parent = -1;	//親ボーン
 	int transLayer = 0;	//変形階層

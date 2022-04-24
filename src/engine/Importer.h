@@ -12,6 +12,8 @@ class Model;
 
 class Importer : public Singleton<Importer>
 {
+	friend class Singleton<Importer>;
+
 	//モデル専用頂点
 	using Vertex = ModelMesh::Vertex_Model;
 
@@ -56,6 +58,10 @@ class Importer : public Singleton<Importer>
 
 	//インポートしたモデル
 	std::map<std::string, std::shared_ptr<Model>>models;
+	void RegisterImportModel(const std::string& Dir, const std::string& FileName, const std::shared_ptr<Model>& Model)
+	{
+		models[Dir + FileName] = Model;
+	}
 	std::shared_ptr<Model> CheckAlreadyExsit(const std::string& Dir, const std::string& FileName);
 
 	//HSMはエンジン専用の多種モデルとの仲介役（他のフォーマット読み込みは時間コストが高い？）
@@ -68,6 +74,8 @@ class Importer : public Singleton<Importer>
 	Importer();
 public:
 	~Importer() { FbxDeviceDestroy(); }
+
+	//※ ファイル名は拡張子つき
 	std::shared_ptr<Model> LoadFBXModel(const std::string& Dir, const std::string& FileName);
 };
 

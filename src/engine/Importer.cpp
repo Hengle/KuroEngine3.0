@@ -21,9 +21,9 @@ bool Importer::SaveData(FILE* Fp, const void* Data, const size_t& Size, const in
 
 void Importer::FbxDeviceDestroy()
 {
-	if (fbxManager)fbxManager->Destroy();
-	if (ioSettings)ioSettings->Destroy();
 	if (fbxImporter)fbxImporter->Destroy();
+	if (ioSettings)ioSettings->Destroy();
+	if (fbxManager)fbxManager->Destroy();
 }
 
 void Importer::TraceFbxMesh(FbxNode* Node, std::vector<FbxMesh*>* Mesh)
@@ -404,6 +404,8 @@ std::shared_ptr<Model> Importer::CheckAlreadyExsit(const std::string& Dir, const
 		//既に生成しているものを渡す
 		if (m.first == Dir + FileName)return m.second;
 	}
+
+	return std::shared_ptr<Model>();
 }
 
 std::shared_ptr<Model> Importer::LoadHSMModel(const std::string& Dir, const std::string& FileName, const std::string& Path)
@@ -434,11 +436,14 @@ std::shared_ptr<Model> Importer::LoadHSMModel(const std::string& Dir, const std:
 	{
 		//メッシュ取得
 		auto& mesh = model->meshes[meshIdx];
+		mesh.mesh = std::make_shared<Mesh<ModelMesh::Vertex_Model>>();
+		mesh.material = std::make_shared<Material>();
+
 		//メッシュ名サイズ
 		ErrorMessage(FUNC_NAME, !LoadData(fp, &size, sizeof(size), 1), "メッシュ名サイズ" + MSG_TAIL);
 		//メッシュ名
-		mesh.name.resize(size);
-		ErrorMessage(FUNC_NAME, !LoadData(fp, &mesh.name[0], size, 1), "メッシュ名" + MSG_TAIL);
+		mesh.mesh->name.resize(size);
+		ErrorMessage(FUNC_NAME, !LoadData(fp, &mesh.mesh->name[0], size, 1), "メッシュ名" + MSG_TAIL);
 
 		//頂点数
 		unsigned short vertNum;
@@ -478,6 +483,9 @@ std::shared_ptr<Model> Importer::LoadHSMModel(const std::string& Dir, const std:
 			material->textures[texIdx].path.resize(size);
 			ErrorMessage(FUNC_NAME, !LoadData(fp, &material->textures[texIdx].path[0], size, 1), "画像ファイルパス" + MSG_TAIL);
 		}
+
+		mesh.material->CreateBuff();
+		mesh.mesh->CreateBuff();
 	}
 
 	//スケルトン取得
@@ -485,6 +493,8 @@ std::shared_ptr<Model> Importer::LoadHSMModel(const std::string& Dir, const std:
 	//ボーンの数
 	unsigned short boneNum;
 	ErrorMessage(FUNC_NAME, !LoadData(fp, &boneNum, sizeof(boneNum), 1), "ボーン数" + MSG_TAIL);
+	skel.bones.resize(boneNum);
+
 	//ボーン情報
 	for (int boneIdx = 0; boneIdx < boneNum; ++boneIdx)
 	{
@@ -492,12 +502,18 @@ std::shared_ptr<Model> Importer::LoadHSMModel(const std::string& Dir, const std:
 		auto& bone = skel.bones[boneIdx];
 		//ボーン名サイズ
 		ErrorMessage(FUNC_NAME, !LoadData(fp, &size, sizeof(size), 1), "ボーン名サイズ" + MSG_TAIL);
-		//ボーン情報
+		//ボーン名
 		bone.name.resize(size);
-		ErrorMessage(FUNC_NAME, !LoadData(fp, &bone, sizeof(Bone) + size, 1), "ボーン情報" + MSG_TAIL);
+		ErrorMessage(FUNC_NAME, !LoadData(fp, &bone.name[0], size, 1), "ボーン名" + MSG_TAIL);
+
+		//名前以外のボーン情報
+		ErrorMessage(FUNC_NAME, !LoadData(fp, &bone.parent, Bone::GetSizeWithOutName(), 1), "ボーン情報" + MSG_TAIL);
 	}
+	skel.CreateBoneTree();
 
 	fclose(fp);
+
+	RegisterImportModel(Dir, FileName, model);
 
 	return model;
 }
@@ -508,7 +524,7 @@ void Importer::SaveHSMModel(const std::string& FileNameTail, std::shared_ptr<Mod
 	static const std::string MSG_TAIL = "の書き込みに失敗\n";
 
 	FILE* fp;
-	fopen_s(&fp, (Model->header.GetModelName() + ".hsm").c_str(), "wb");
+	fopen_s(&fp, (Model->header.dir + Model->header.GetModelName() + FileNameTail + ".hsm").c_str(), "wb");
 	ErrorMessage(FUNC_NAME, fp == nullptr, ".hsmファイルのバイナリ書き込みモードでのオープンに失敗\n");
 
 	//最終更新日時
@@ -526,10 +542,10 @@ void Importer::SaveHSMModel(const std::string& FileNameTail, std::shared_ptr<Mod
 		//メッシュ取得
 		auto& mesh = Model->meshes[meshIdx];
 		//メッシュ名サイズ
-		size = mesh.name.length();
+		size = mesh.mesh->name.length();
 		ErrorMessage(FUNC_NAME, !SaveData(fp, &size, sizeof(size), 1), "メッシュ名サイズ" + MSG_TAIL);
 		//メッシュ名
-		ErrorMessage(FUNC_NAME, !SaveData(fp, mesh.name.data(), size, 1), "メッシュ名" + MSG_TAIL);
+		ErrorMessage(FUNC_NAME, !SaveData(fp, mesh.mesh->name.data(), size, 1), "メッシュ名" + MSG_TAIL);
 
 		//頂点数
 		unsigned short vertNum = mesh.mesh->vertices.size();
@@ -589,8 +605,10 @@ void Importer::SaveHSMModel(const std::string& FileNameTail, std::shared_ptr<Mod
 		//ボーン名サイズ
 		size = bone.name.length();
 		ErrorMessage(FUNC_NAME, !SaveData(fp, &size, sizeof(size), 1), "ボーン名サイズ" + MSG_TAIL);
+		//ボーン名
+		ErrorMessage(FUNC_NAME, !SaveData(fp, bone.name.data(), size, 1), "ボーン名" + MSG_TAIL);
 		//ボーン情報
-		ErrorMessage(FUNC_NAME, !SaveData(fp, &bone, sizeof(Bone) + size, 1), "ボーン情報" + MSG_TAIL);
+		ErrorMessage(FUNC_NAME, !SaveData(fp, &bone.parent, Bone::GetSizeWithOutName(), 1), "ボーン情報" + MSG_TAIL);
 	}
 
 	fclose(fp);
@@ -625,17 +643,20 @@ std::shared_ptr<Model> Importer::LoadFBXModel(const std::string& Dir, const std:
 	if (result)return result;	//生成していたらそれを返す
 
 	//拡張子取得
-	const auto ext = KuroFunc::GetExtension(FileName);
+	const auto ext = "." + KuroFunc::GetExtension(FileName);
 	ErrorMessage(FUNC_NAME, ext != ".fbx", "拡張子が合いません\n");
 
 	//モデル名取得(ファイル名から拡張子を除いたもの)
 	auto modelName = FileName;
 	modelName.erase(modelName.size() - ext.size());
 
+	//ファイルパス
+	const auto path = Dir + FileName;
+
 	//fbxファイルの最終更新日時を読み取る
 	FILETIME fbxLastWriteTime;
 	HANDLE fbxFile = CreateFile(
-		KuroFunc::GetWideStrFromStr(Dir + FileName).c_str(),
+		KuroFunc::GetWideStrFromStr(path).c_str(),
 		0,
 		0,
 		NULL,
@@ -666,8 +687,7 @@ std::shared_ptr<Model> Importer::LoadFBXModel(const std::string& Dir, const std:
 		}
 	}
 
-	//ファイルパス
-	const auto path = Dir + FileName;
+
 	//ファイルの存在を確認
 	ErrorMessage(FUNC_NAME, !KuroFunc::ExistFile(path), "ファイルが存在しません\n");
 
@@ -699,16 +719,17 @@ std::shared_ptr<Model> Importer::LoadFBXModel(const std::string& Dir, const std:
 
 	for (int i = 0; i < fbxMeshes.size(); ++i)
 	{
-		auto fbxMesh = fbxMeshes[i];
+		auto& fbxMesh = fbxMeshes[i];
 
 		//モデル用メッシュ生成
 		ModelMesh mesh;
+		mesh.mesh = std::make_shared<Mesh<ModelMesh::Vertex_Model>>();
 
 		//メッシュ名取得
 		const std::string meshName = fbxMesh->GetName();
 
 		//メッシュ名セット
-		mesh.name = meshName;
+		mesh.mesh->name = meshName;
 
 		//ボーンが頂点に与える影響に関する情報テーブル
 		BoneTable boneAffectTable;
@@ -732,6 +753,8 @@ std::shared_ptr<Model> Importer::LoadFBXModel(const std::string& Dir, const std:
 	result->skelton = skel;
 
 	SaveHSMModel(HSM_TAIL, result, fbxLastWriteTime);
+
+	RegisterImportModel(Dir, FileName, result);
 
 	return result;
 }
