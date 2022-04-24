@@ -8,14 +8,10 @@ std::shared_ptr<TextureBuffer>DrawFunc2D_Shadow::DEFAULT_NORMAL_MAP;
 std::shared_ptr<TextureBuffer>DrawFunc2D_Shadow::DEFAULT_EMISSIVE_MAP;
 
 //DrawExtendGraph
-std::shared_ptr<GraphicsPipeline>DrawFunc2D_Shadow::EXTEND_GRAPH_PIPELINE;
 int DrawFunc2D_Shadow::DRAW_EXTEND_GRAPH_COUNT = 0;
-std::vector<std::shared_ptr<VertexBuffer>>DrawFunc2D_Shadow::EXTEND_GRAPH_VERTEX_BUFF;
 
 //DrawRotaGraph
-std::shared_ptr<GraphicsPipeline>DrawFunc2D_Shadow::ROTA_GRAPH_PIPELINE;
 int DrawFunc2D_Shadow::DRAW_ROTA_GRAPH_COUNT = 0;
-std::vector<std::shared_ptr<VertexBuffer>>DrawFunc2D_Shadow::ROTA_GRAPH_VERTEX_BUFF;
 
 static std::vector<RootParam>ROOT_PARAMETER =
 {
@@ -72,6 +68,9 @@ void DrawFunc2D_Shadow::DrawExtendGraph2D(LightManager& LigManager, const Vec2<f
 			:leftUpPos(LeftUpPos), rightBottomPos(RightBottomPos), miror({ Miror.x ? 1 : 0 ,Miror.y ? 1 : 0 }),
 			depth(Depth), diffuse(Diffuse), specular(Specular), lim(Lim) {}
 	};
+
+	static std::shared_ptr<GraphicsPipeline>EXTEND_GRAPH_PIPELINE;
+	static std::vector<std::shared_ptr<VertexBuffer>>EXTEND_GRAPH_VERTEX_BUFF;
 
 	//パイプライン未生成
 	if (!EXTEND_GRAPH_PIPELINE)
@@ -163,6 +162,9 @@ void DrawFunc2D_Shadow::DrawRotaGraph2D(LightManager& LigManager, const Vec2<flo
 			:center(Center), extRate(ExtRate), radian(Radian), rotaCenterUV(RotaCenterUV), miror({ Miror.x ? 1 : 0,Miror.y ? 1 : 0 }),
 			depth(Depth), diffuse(Diffuse), specular(Specular), lim(Lim) {}
 	};
+
+	static std::shared_ptr<GraphicsPipeline>ROTA_GRAPH_PIPELINE;
+	static std::vector<std::shared_ptr<VertexBuffer>>ROTA_GRAPH_VERTEX_BUFF;
 
 	//パイプライン未生成
 	if (!ROTA_GRAPH_PIPELINE)

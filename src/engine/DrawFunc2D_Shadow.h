@@ -19,14 +19,10 @@ static class DrawFunc2D_Shadow
 	static std::shared_ptr<TextureBuffer>DEFAULT_EMISSIVE_MAP;
 
 	//DrawExtendGraph
-	static std::shared_ptr<GraphicsPipeline>EXTEND_GRAPH_PIPELINE;
 	static int DRAW_EXTEND_GRAPH_COUNT;
-	static std::vector<std::shared_ptr<VertexBuffer>>EXTEND_GRAPH_VERTEX_BUFF;
 
 	//DrawRotaGraph
-	static std::shared_ptr<GraphicsPipeline>ROTA_GRAPH_PIPELINE;
 	static int DRAW_ROTA_GRAPH_COUNT;
-	static std::vector<std::shared_ptr<VertexBuffer>>ROTA_GRAPH_VERTEX_BUFF;
 
 	static void StaticInit();
 public:

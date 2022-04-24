@@ -2,32 +2,25 @@
 #include"KuroEngine.h"
 
 //DrawLine
-std::shared_ptr<GraphicsPipeline>DrawFunc2D::LINE_PIPELINE[AlphaBlendModeNum];
 int DrawFunc2D::DRAW_LINE_COUNT = 0;
-std::vector<std::shared_ptr<VertexBuffer>>DrawFunc2D::LINE_VERTEX_BUFF;
 
 //DrawBox
-std::map<DXGI_FORMAT, std::map<AlphaBlendMode, std::shared_ptr<GraphicsPipeline>>>DrawFunc2D::BOX_PIPELINE;
 int DrawFunc2D::DRAW_BOX_COUNT = 0;
-std::vector<std::shared_ptr<VertexBuffer>>DrawFunc2D::BOX_VERTEX_BUFF;
 
 //DrawCircle
-std::shared_ptr<GraphicsPipeline>DrawFunc2D::CIRCLE_PIPELINE[AlphaBlendModeNum];
 int DrawFunc2D::DRAW_CIRCLE_COUNT = 0;
-std::vector<std::shared_ptr<VertexBuffer>>DrawFunc2D::CIRCLE_VERTEX_BUFF;
 
 //DrawExtendGraph
-std::shared_ptr<GraphicsPipeline>DrawFunc2D::EXTEND_GRAPH_PIPELINE[AlphaBlendModeNum];
 int DrawFunc2D::DRAW_EXTEND_GRAPH_COUNT = 0;
-std::vector<std::shared_ptr<VertexBuffer>>DrawFunc2D::EXTEND_GRAPH_VERTEX_BUFF;
 
 //DrawRotaGraph
-std::shared_ptr<GraphicsPipeline>DrawFunc2D::ROTA_GRAPH_PIPELINE[AlphaBlendModeNum];
 int DrawFunc2D::DRAW_ROTA_GRAPH_COUNT = 0;
-std::vector<std::shared_ptr<VertexBuffer>>DrawFunc2D::ROTA_GRAPH_VERTEX_BUFF;
 
 void DrawFunc2D::DrawLine2D(const Vec2<float>& FromPos, const Vec2<float>& ToPos, const Color& LineColor, const AlphaBlendMode& BlendMode)
 {
+	static std::shared_ptr<GraphicsPipeline>LINE_PIPELINE[AlphaBlendModeNum];
+	static std::vector<std::shared_ptr<VertexBuffer>>LINE_VERTEX_BUFF;
+
 	//DrawLine専用頂点
 	class LineVertex
 	{
@@ -38,7 +31,7 @@ void DrawFunc2D::DrawLine2D(const Vec2<float>& FromPos, const Vec2<float>& ToPos
 	};
 
 	//パイプライン未生成
-	if(!LINE_PIPELINE[0])
+	if(!LINE_PIPELINE[BlendMode])
 	{
 		//パイプライン設定
 		static PipelineInitializeOption PIPELINE_OPTION(D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE, D3D_PRIMITIVE_TOPOLOGY_LINESTRIP);
@@ -63,12 +56,9 @@ void DrawFunc2D::DrawLine2D(const Vec2<float>& FromPos, const Vec2<float>& ToPos
 		};
 
 		//レンダーターゲット描画先情報
-		for (int i = 0; i < AlphaBlendModeNum; ++i)
-		{
-			std::vector<RenderTargetInfo>RENDER_TARGET_INFO = { RenderTargetInfo(D3D12App::Instance()->GetBackBuffFormat(), (AlphaBlendMode)i) };
-			//パイプライン生成
-			LINE_PIPELINE[i] = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, INPUT_LAYOUT, ROOT_PARAMETER, RENDER_TARGET_INFO, WrappedSampler(false, false));
-		}
+		std::vector<RenderTargetInfo>RENDER_TARGET_INFO = { RenderTargetInfo(D3D12App::Instance()->GetBackBuffFormat(), BlendMode) };
+		//パイプライン生成
+		LINE_PIPELINE[BlendMode] = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, INPUT_LAYOUT, ROOT_PARAMETER, RENDER_TARGET_INFO, WrappedSampler(false, false));
 	}
 
 	KuroEngine::Instance().Graphics().SetPipeline(LINE_PIPELINE[BlendMode]);
@@ -103,10 +93,13 @@ void DrawFunc2D::DrawLine2DGraph(const Vec2<float>& FromPos, const Vec2<float>& 
 }
 
 
-void DrawFunc2D::DrawBox2D(const Vec2<float>& LeftUpPos, const Vec2<float>& RightBottomPos, const Color& BoxColor, const DXGI_FORMAT& Format, const bool& FillFlg, const AlphaBlendMode& BlendMode)
+void DrawFunc2D::DrawBox2D(const Vec2<float>& LeftUpPos, const Vec2<float>& RightBottomPos, const Color& BoxColor, const bool& FillFlg, const AlphaBlendMode& BlendMode)
 {
 	if (FillFlg)
 	{
+		static std::shared_ptr<GraphicsPipeline>BOX_PIPELINE[AlphaBlendModeNum];
+		static std::vector<std::shared_ptr<VertexBuffer>>BOX_VERTEX_BUFF;
+
 		//DrawBox専用頂点
 		class BoxVertex
 		{
@@ -119,7 +112,7 @@ void DrawFunc2D::DrawBox2D(const Vec2<float>& LeftUpPos, const Vec2<float>& Righ
 		};
 
 		//パイプライン未精製
-		if (!BOX_PIPELINE[Format][BlendMode])
+		if (!BOX_PIPELINE[BlendMode])
 		{
 			//パイプライン設定
 			static PipelineInitializeOption PIPELINE_OPTION(D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT, D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
@@ -146,12 +139,12 @@ void DrawFunc2D::DrawBox2D(const Vec2<float>& LeftUpPos, const Vec2<float>& Righ
 			};
 
 			//レンダーターゲット描画先情報
-			std::vector<RenderTargetInfo>RENDER_TARGET_INFO = { RenderTargetInfo(Format, BlendMode) };
+			std::vector<RenderTargetInfo>RENDER_TARGET_INFO = { RenderTargetInfo(D3D12App::Instance()->GetBackBuffFormat(), BlendMode) };
 			//パイプライン生成
-			BOX_PIPELINE[Format][BlendMode] = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, INPUT_LAYOUT, ROOT_PARAMETER, RENDER_TARGET_INFO, WrappedSampler(false, false));
+			BOX_PIPELINE[BlendMode] = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, INPUT_LAYOUT, ROOT_PARAMETER, RENDER_TARGET_INFO, WrappedSampler(false, false));
 		}
 
-		KuroEngine::Instance().Graphics().SetPipeline(BOX_PIPELINE[Format][BlendMode]);
+		KuroEngine::Instance().Graphics().SetPipeline(BOX_PIPELINE[BlendMode]);
 
 		if (BOX_VERTEX_BUFF.size() < (DRAW_BOX_COUNT + 1))
 		{
@@ -186,6 +179,9 @@ void DrawFunc2D::DrawBox2D(const Vec2<float>& LeftUpPos, const Vec2<float>& Righ
 
 void DrawFunc2D::DrawCircle2D(const Vec2<float>& Center, const float& Radius, const Color& CircleColor, const bool& FillFlg, const int& LineThickness, const AlphaBlendMode& BlendMode)
 {
+	static std::shared_ptr<GraphicsPipeline>CIRCLE_PIPELINE[AlphaBlendModeNum];
+	static std::vector<std::shared_ptr<VertexBuffer>>CIRCLE_VERTEX_BUFF;
+
 	//DrawCircle専用頂点
 	class CircleVertex
 	{
@@ -201,7 +197,7 @@ void DrawFunc2D::DrawCircle2D(const Vec2<float>& Center, const float& Radius, co
 	};
 
 	//パイプライン未生成
-	if (!CIRCLE_PIPELINE[0])
+	if (!CIRCLE_PIPELINE[BlendMode])
 	{
 		//パイプライン設定
 		static PipelineInitializeOption PIPELINE_OPTION(D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT, D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
@@ -230,12 +226,9 @@ void DrawFunc2D::DrawCircle2D(const Vec2<float>& Center, const float& Radius, co
 		};
 
 		//レンダーターゲット描画先情報
-		for (int i = 0; i < AlphaBlendModeNum; ++i)
-		{
-			std::vector<RenderTargetInfo>RENDER_TARGET_INFO = { RenderTargetInfo(D3D12App::Instance()->GetBackBuffFormat(), (AlphaBlendMode)i) };
-			//パイプライン生成
-			CIRCLE_PIPELINE[i] = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, INPUT_LAYOUT, ROOT_PARAMETER, RENDER_TARGET_INFO, WrappedSampler(false, false));
-		}
+		std::vector<RenderTargetInfo>RENDER_TARGET_INFO = { RenderTargetInfo(D3D12App::Instance()->GetBackBuffFormat(), BlendMode) };
+		//パイプライン生成
+		CIRCLE_PIPELINE[BlendMode] = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, INPUT_LAYOUT, ROOT_PARAMETER, RENDER_TARGET_INFO, WrappedSampler(false, false));
 	}
 
 	KuroEngine::Instance().Graphics().SetPipeline(CIRCLE_PIPELINE[BlendMode]);
@@ -256,12 +249,14 @@ void DrawFunc2D::DrawCircle2D(const Vec2<float>& Center, const float& Radius, co
 
 void DrawFunc2D::DrawGraph(const Vec2<float>& LeftUpPos, const std::shared_ptr<TextureBuffer>& Tex, const AlphaBlendMode& BlendMode, const Vec2<bool>& Miror)
 {
-	auto graphSize = Tex->GetGraphSize();
-	DrawExtendGraph2D(LeftUpPos, LeftUpPos + graphSize.Float(), Tex, BlendMode, Miror);
+	DrawExtendGraph2D(LeftUpPos, LeftUpPos + Tex->GetGraphSize().Float(), Tex, BlendMode, Miror);
 }
 
 void DrawFunc2D::DrawExtendGraph2D(const Vec2<float>& LeftUpPos, const Vec2<float>& RightBottomPos, const std::shared_ptr<TextureBuffer>& Tex, const AlphaBlendMode& BlendMode, const Vec2<bool>& Miror)
 {
+	static std::shared_ptr<GraphicsPipeline>EXTEND_GRAPH_PIPELINE[AlphaBlendModeNum];
+	static std::vector<std::shared_ptr<VertexBuffer>>EXTEND_GRAPH_VERTEX_BUFF;
+
 	//DrawExtendGraph専用頂点
 	class ExtendGraphVertex
 	{
@@ -274,7 +269,7 @@ void DrawFunc2D::DrawExtendGraph2D(const Vec2<float>& LeftUpPos, const Vec2<floa
 	};
 
 	//パイプライン未生成
-	if (!EXTEND_GRAPH_PIPELINE[0])
+	if (!EXTEND_GRAPH_PIPELINE[BlendMode])
 	{
 		//パイプライン設定
 		static PipelineInitializeOption PIPELINE_OPTION(D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT, D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
@@ -302,12 +297,9 @@ void DrawFunc2D::DrawExtendGraph2D(const Vec2<float>& LeftUpPos, const Vec2<floa
 		};
 
 		//レンダーターゲット描画先情報
-		for (int i = 0; i < AlphaBlendModeNum; ++i)
-		{
-			std::vector<RenderTargetInfo>RENDER_TARGET_INFO = { RenderTargetInfo(D3D12App::Instance()->GetBackBuffFormat(), (AlphaBlendMode)i) };
-			//パイプライン生成
-			EXTEND_GRAPH_PIPELINE[i] = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, INPUT_LAYOUT, ROOT_PARAMETER, RENDER_TARGET_INFO, WrappedSampler(true, false));
-		}
+		std::vector<RenderTargetInfo>RENDER_TARGET_INFO = { RenderTargetInfo(D3D12App::Instance()->GetBackBuffFormat(), BlendMode) };
+		//パイプライン生成
+		EXTEND_GRAPH_PIPELINE[BlendMode] = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, INPUT_LAYOUT, ROOT_PARAMETER, RENDER_TARGET_INFO, WrappedSampler(true, false));
 	}
 
 	KuroEngine::Instance().Graphics().SetPipeline(EXTEND_GRAPH_PIPELINE[BlendMode]);
@@ -328,6 +320,9 @@ void DrawFunc2D::DrawExtendGraph2D(const Vec2<float>& LeftUpPos, const Vec2<floa
 void DrawFunc2D::DrawRotaGraph2D(const Vec2<float>& Center, const Vec2<float>& ExtRate, const float& Radian,
 	const std::shared_ptr<TextureBuffer>& Tex, const Vec2<float>& RotaCenterUV, const AlphaBlendMode& BlendMode, const Vec2<bool>& Miror)
 {
+	static std::shared_ptr<GraphicsPipeline>ROTA_GRAPH_PIPELINE[AlphaBlendModeNum];
+	static std::vector<std::shared_ptr<VertexBuffer>>ROTA_GRAPH_VERTEX_BUFF;
+
 	//DrawRotaGraph専用頂点
 	class RotaGraphVertex
 	{
@@ -343,7 +338,7 @@ void DrawFunc2D::DrawRotaGraph2D(const Vec2<float>& Center, const Vec2<float>& E
 	};
 
 	//パイプライン未生成
-	if (!ROTA_GRAPH_PIPELINE[0])
+	if (!ROTA_GRAPH_PIPELINE[BlendMode])
 	{
 		//パイプライン設定
 		static PipelineInitializeOption PIPELINE_OPTION(D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT, D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
@@ -373,12 +368,9 @@ void DrawFunc2D::DrawRotaGraph2D(const Vec2<float>& Center, const Vec2<float>& E
 		};
 
 		//レンダーターゲット描画先情報
-		for (int i = 0; i < AlphaBlendModeNum; ++i)
-		{
-			std::vector<RenderTargetInfo>RENDER_TARGET_INFO = { RenderTargetInfo(D3D12App::Instance()->GetBackBuffFormat(), (AlphaBlendMode)i) };
-			//パイプライン生成
-			ROTA_GRAPH_PIPELINE[i] = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, INPUT_LAYOUT, ROOT_PARAMETER, RENDER_TARGET_INFO, WrappedSampler(true, false));
-		}
+		std::vector<RenderTargetInfo>RENDER_TARGET_INFO = { RenderTargetInfo(D3D12App::Instance()->GetBackBuffFormat(), BlendMode) };
+		//パイプライン生成
+		ROTA_GRAPH_PIPELINE[BlendMode] = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, INPUT_LAYOUT, ROOT_PARAMETER, RENDER_TARGET_INFO, WrappedSampler(true, false));
 	}
 
 	KuroEngine::Instance().Graphics().SetPipeline(ROTA_GRAPH_PIPELINE[BlendMode]);
