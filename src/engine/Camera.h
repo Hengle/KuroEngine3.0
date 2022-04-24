@@ -30,6 +30,34 @@ public:
 	const std::string name;
 	Camera(const std::string& Name);
 
+	//セッタ
+	void SetPos(const Vec3<float>& Pos) 
+	{
+		pos = Pos;
+		dirty = true;
+	}
+	void SetUp(const Vec3<float>& Up)
+	{
+		up = Up;
+		dirty = true;
+	}
+	void SetTarget(const Vec3<float>& Target) 
+	{
+		target = Target;
+		dirty = true;
+	}
+	void SetAngleOfView(const Angle& Angle)
+	{
+		angleOfView = Angle;
+		dirty = true;
+	}
+
+	//ゲッタ
+	const Vec3<float>& GetPos() { return pos; }
+	const Vec3<float>& GetUp() { return up; }
+	const Vec3<float>& GetTarget() { return target; }
+	const Angle& GetAngleOfView() { return angleOfView; }
+
 	const std::shared_ptr<ConstantBuffer>&GetBuff();
 };
 
