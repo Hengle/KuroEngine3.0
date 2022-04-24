@@ -11,6 +11,8 @@
 #include"DrawFunc2D_Mask.h"
 #include"DrawFunc2D_Color.h"
 
+#include"DrawFunc3D.h"
+
 
 #ifdef _DEBUG
 int main()
@@ -61,6 +63,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		DrawFunc2D_FillTex::CountReset();
 		DrawFunc2D_Mask::CountReset();
 		DrawFunc2D_Color::CountReset();
+
+		DrawFunc3D::CountReset();
 
 		//メッセージがある？
 		MSG msg{};

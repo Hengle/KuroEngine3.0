@@ -359,7 +359,6 @@ void Importer::LoadFbxMaterial(const std::string& Dir, ModelMesh& ModelMesh, Fbx
 				auto path = Dir + GetFileName(emissiveTex->GetRelativeFileName());
 				//エミッシブマップ
 				newMaterial->textures[EMISSIVE_TEX].path = path;
-				newMaterial->textures[EMISSIVE_TEX].texBuff = D3D12App::Instance()->GenerateTextureBuffer(path);
 			}
 		}
 
@@ -388,7 +387,6 @@ void Importer::LoadFbxMaterial(const std::string& Dir, ModelMesh& ModelMesh, Fbx
 		{
 			auto path = Dir + GetFileName(tex->GetRelativeFileName());
 			newMaterial->textures[COLOR_TEX].path = path;
-			newMaterial->textures[COLOR_TEX].texBuff = D3D12App::Instance()->GenerateTextureBuffer(path);
 		}
 
 		ModelMesh.material = newMaterial;
