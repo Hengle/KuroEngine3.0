@@ -11,6 +11,9 @@
 #include"Skeleton.h"
 class Model;
 
+#include<GLTFSDK/GLTF.h>
+#include"StreamReader.h"
+
 class Importer : public Singleton<Importer>
 {
 	friend class Singleton<Importer>;
@@ -61,6 +64,12 @@ class Importer : public Singleton<Importer>
 
 #pragma endregion
 
+#pragma region glTF関連
+	void LoadGLTFPrimitive(ModelMesh& ModelMesh, const Microsoft::glTF::MeshPrimitive& GLTFPrimitive, const Microsoft::glTF::GLTFResourceReader& Reader, const Microsoft::glTF::Document& Doc);
+	void PrintDocumentInfo(const Microsoft::glTF::Document& document);
+	void PrintResourceInfo(const Microsoft::glTF::Document& document, const Microsoft::glTF::GLTFResourceReader& resourceReader);
+#pragma endregion
+
 	//インポートしたモデル
 	std::map<std::string, std::shared_ptr<Model>>models;
 	void RegisterImportModel(const std::string& Dir, const std::string& FileName, const std::shared_ptr<Model>& Model)
@@ -82,5 +91,6 @@ public:
 
 	//※ ファイル名は拡張子つき
 	std::shared_ptr<Model> LoadFBXModel(const std::string& Dir, const std::string& FileName);
+	std::shared_ptr<Model> LoadGLTFModel(const std::string& Dir, const std::string& FileName);
 };
 

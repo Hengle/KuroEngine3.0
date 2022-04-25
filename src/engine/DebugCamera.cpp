@@ -72,7 +72,7 @@ void DebugCamera::Move()
 	if (mouseMove.IZ != 0)
 	{
 		dist -= mouseMove.IZ / 100.0f;
-		dist = max(dist, 1.0f);
+		dist = std::max(dist, 1.0f);
 		moveDirty = true;
 	}
 

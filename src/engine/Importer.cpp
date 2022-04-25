@@ -477,6 +477,190 @@ void Importer::LoadAnimCurve(FbxAnimCurve* FbxAnimCurve, Animation& Animation)
 	}
 }
 
+void Importer::LoadGLTFPrimitive(ModelMesh& ModelMesh, const Microsoft::glTF::MeshPrimitive& GLTFPrimitive, const Microsoft::glTF::GLTFResourceReader& Reader, const Microsoft::glTF::Document& Doc)
+{
+	using namespace Microsoft::glTF;
+
+	// 頂点位置情報アクセッサの取得
+	auto& idPos = GLTFPrimitive.GetAttributeAccessorId(ACCESSOR_POSITION);
+	auto& accPos = Doc.accessors.Get(idPos);
+	// 法線情報アクセッサの取得
+	auto& idNrm = GLTFPrimitive.GetAttributeAccessorId(ACCESSOR_NORMAL);
+	auto& accNrm = Doc.accessors.Get(idNrm);
+	// テクスチャ座標情報アクセッサの取得
+	auto& idUV = GLTFPrimitive.GetAttributeAccessorId(ACCESSOR_TEXCOORD_0);
+	auto& accUV = Doc.accessors.Get(idUV);
+
+	auto& idJoint = GLTFPrimitive.GetAttributeAccessorId(ACCESSOR_JOINTS_0);
+	auto& accJoint = Doc.accessors.Get(idJoint);
+
+	auto& idWeight = GLTFPrimitive.GetAttributeAccessorId(ACCESSOR_WEIGHTS_0);
+	auto& accWeight = Doc.accessors.Get(idWeight);
+
+	// アクセッサからデータ列を取得
+	auto vertPos = Reader.ReadBinaryData<float>(Doc, accPos);
+	auto vertNrm = Reader.ReadBinaryData<float>(Doc, accNrm);
+	auto vertUV = Reader.ReadBinaryData<float>(Doc, accUV);
+	auto vertJoint = Reader.ReadBinaryData<uint8_t>(Doc, accJoint);
+	auto vertWeight = Reader.ReadBinaryData<float>(Doc, accWeight);
+
+	auto vertexCount = accPos.count;
+	for (uint32_t i = 0; i < vertexCount; ++i)
+	{
+		// 頂点データの構築
+		int vid0 = 3 * i, vid1 = 3 * i + 1, vid2 = 3 * i + 2;
+		int tid0 = 2 * i, tid1 = 2 * i + 1;
+		int jid0 = 4 * i, jid1 = 4 * i + 1, jid2 = 4 * i + 2, jid3 = 4 * i + 3;
+
+		ModelMesh::Vertex_Model vertex;
+		vertex.pos = { vertPos[vid0],vertPos[vid1],vertPos[vid2] };
+		vertex.normal = { vertNrm[vid0],vertNrm[vid1],vertNrm[vid2] };
+		vertex.uv = { vertUV[tid0],vertUV[tid1] };
+
+		vertex.boneWeight = { vertWeight[jid0],vertWeight[jid1],vertWeight[jid2],vertWeight[jid3] };
+		if (vertex.boneWeight.x)vertex.boneIdx.x = static_cast<signed short>(vertJoint[jid0]);
+		if (vertex.boneWeight.y)vertex.boneIdx.y = static_cast<signed short>(vertJoint[jid1]);
+		if (vertex.boneWeight.z)vertex.boneIdx.z = static_cast<signed short>(vertJoint[jid2]);
+		if (vertex.boneWeight.w)vertex.boneIdx.w = static_cast<signed short>(vertJoint[jid3]);
+		ModelMesh.mesh->vertices.emplace_back(vertex);
+	}
+
+	// 頂点インデックス用アクセッサの取得
+	auto& idIndex = GLTFPrimitive.indicesAccessorId;
+	auto& accIndex = Doc.accessors.Get(idIndex);
+
+	// インデックスデータ
+	std::vector<uint16_t>indices = Reader.ReadBinaryData<uint16_t>(Doc, accIndex);
+	for (const auto& index : indices)
+	{
+		ModelMesh.mesh->indices.emplace_back(static_cast<unsigned int>(index));
+	}
+}
+
+void Importer::PrintDocumentInfo(const Microsoft::glTF::Document& document)
+{
+	// Asset Info
+	std::cout << "Asset Version:    " << document.asset.version << "\n";
+	std::cout << "Asset MinVersion: " << document.asset.minVersion << "\n";
+	std::cout << "Asset Generator:  " << document.asset.generator << "\n";
+	std::cout << "Asset Copyright:  " << document.asset.copyright << "\n\n";
+
+	// Scene Info
+	std::cout << "Scene Count: " << document.scenes.Size() << "\n";
+
+	if (document.scenes.Size() > 0U)
+	{
+		std::cout << "Default Scene Index: " << document.GetDefaultScene().id << "\n\n";
+	}
+	else
+	{
+		std::cout << "\n";
+	}
+
+	// Entity Info
+	std::cout << "Node Count:     " << document.nodes.Size() << "\n";
+	std::cout << "Camera Count:   " << document.cameras.Size() << "\n";
+	std::cout << "Material Count: " << document.materials.Size() << "\n\n";
+
+	// Mesh Info
+	std::cout << "Mesh Count: " << document.meshes.Size() << "\n";
+	std::cout << "Skin Count: " << document.skins.Size() << "\n\n";
+
+	// Texture Info
+	std::cout << "Image Count:   " << document.images.Size() << "\n";
+	std::cout << "Texture Count: " << document.textures.Size() << "\n";
+	std::cout << "Sampler Count: " << document.samplers.Size() << "\n\n";
+
+	// Buffer Info
+	std::cout << "Buffer Count:     " << document.buffers.Size() << "\n";
+	std::cout << "BufferView Count: " << document.bufferViews.Size() << "\n";
+	std::cout << "Accessor Count:   " << document.accessors.Size() << "\n\n";
+
+	// Animation Info
+	std::cout << "Animation Count: " << document.animations.Size() << "\n\n";
+
+	for (const auto& extension : document.extensionsUsed)
+	{
+		std::cout << "Extension Used: " << extension << "\n";
+	}
+
+	if (!document.extensionsUsed.empty())
+	{
+		std::cout << "\n";
+	}
+
+	for (const auto& extension : document.extensionsRequired)
+	{
+		std::cout << "Extension Required: " << extension << "\n";
+	}
+
+	if (!document.extensionsRequired.empty())
+	{
+		std::cout << "\n";
+	}
+}
+
+void Importer::PrintResourceInfo(const Microsoft::glTF::Document& document, const Microsoft::glTF::GLTFResourceReader& resourceReader)
+{
+	using namespace Microsoft::glTF;
+	// Use the resource reader to get each mesh primitive's position data
+	for (const auto& mesh : document.meshes.Elements())
+	{
+		std::cout << "Mesh: " << mesh.id << "\n";
+
+		for (const auto& meshPrimitive : mesh.primitives)
+		{
+			std::string accessorId;
+
+			if (meshPrimitive.TryGetAttributeAccessorId(ACCESSOR_POSITION, accessorId))
+			{
+				const Accessor& accessor = document.accessors.Get(accessorId);
+
+				const auto data = resourceReader.ReadBinaryData<float>(document, accessor);
+				const auto dataByteLength = data.size() * sizeof(float);
+
+				std::cout << "MeshPrimitive: " << dataByteLength << " bytes of position data\n";
+			}
+		}
+
+		std::cout << "\n";
+	}
+
+	// Use the resource reader to get each image's data
+	for (const auto& image : document.images.Elements())
+	{
+		std::string filename;
+
+		if (image.uri.empty())
+		{
+			assert(!image.bufferViewId.empty());
+
+			auto& bufferView = document.bufferViews.Get(image.bufferViewId);
+			auto& buffer = document.buffers.Get(bufferView.bufferId);
+
+			filename += buffer.uri; //NOTE: buffer uri is empty if image is stored in GLB binary chunk
+		}
+		else if (IsUriBase64(image.uri))
+		{
+			filename = "Data URI";
+		}
+		else
+		{
+			filename = image.uri;
+		}
+
+		auto data = resourceReader.ReadBinaryData(document, image);
+
+		std::cout << "Image: " << image.id << "\n";
+		std::cout << "Image: " << data.size() << " bytes of image data\n";
+
+		if (!filename.empty())
+		{
+			std::cout << "Image filename: " << filename << "\n\n";
+		}
+	}
+}
+
 std::shared_ptr<Model> Importer::CheckAlreadyExsit(const std::string& Dir, const std::string& FileName)
 {
 	//生成済
@@ -861,6 +1045,114 @@ std::shared_ptr<Model> Importer::LoadFBXModel(const std::string& Dir, const std:
 	//SaveHSMModel(HSM_TAIL, result, fbxLastWriteTime);
 
 	RegisterImportModel(Dir, FileName, result);
+
+	return result;
+}
+
+#include<sstream>
+std::shared_ptr<Model> Importer::LoadGLTFModel(const std::string& Dir, const std::string& FileName)
+{
+	std::shared_ptr<Model>result = std::make_shared<Model>(Dir, FileName);
+
+	auto modelFilePath = std::experimental::filesystem::path(Dir + FileName);
+	if (modelFilePath.is_relative())
+	{
+		auto current = std::experimental::filesystem::current_path();
+		current /= modelFilePath;
+		current.swap(modelFilePath);
+	}
+	auto reader = std::make_unique<StreamReader>(modelFilePath.parent_path());
+	auto stream = reader->GetInputStream(modelFilePath.filename().u8string());
+
+	//拡張子 ".gltf" ".glb" の判定
+	std::experimental::filesystem::path pathFile = modelFilePath.filename();
+	std::experimental::filesystem::path pathFileExt = pathFile.extension();
+
+	std::string manifest;
+
+	auto MakePathExt = [](const std::string& ext)
+	{
+		return "." + ext;
+	};
+
+	std::unique_ptr<Microsoft::glTF::GLTFResourceReader> resourceReader;
+
+	if (pathFileExt == MakePathExt(Microsoft::glTF::GLTF_EXTENSION))
+	{
+		auto gltfResourceReader = std::make_unique<Microsoft::glTF::GLTFResourceReader>(std::move(reader));
+
+		std::stringstream manifestStream;
+
+		// Read the contents of the glTF file into a string using a std::stringstream
+		manifestStream << stream->rdbuf();
+		manifest = manifestStream.str();
+
+		resourceReader = std::move(gltfResourceReader);
+	}
+	else if (pathFileExt == MakePathExt(Microsoft::glTF::GLB_EXTENSION))
+	{
+		auto glbResourceReader = std::make_unique<Microsoft::glTF::GLBResourceReader>(std::move(reader), std::move(stream));
+
+		manifest = glbResourceReader->GetJson(); // Get the manifest from the JSON chunk
+
+		resourceReader = std::move(glbResourceReader);
+	}
+
+	KuroFunc::ErrorMessage(!resourceReader, "Importer", "LoadGLTFModel", "ファイルの拡張子が glb でも gltf でもありません\n");
+
+	Microsoft::glTF::Document doc;
+	try
+	{
+		doc = Microsoft::glTF::Deserialize(manifest);
+	}
+	catch (const Microsoft::glTF::GLTFException& ex)
+	{
+		std::stringstream ss;
+		ss << "Microsoft::glTF::Deserialize failed: ";
+		ss << ex.what();
+		throw std::runtime_error(ss.str());
+	}
+
+	PrintDocumentInfo(doc);
+	PrintResourceInfo(doc, *resourceReader);
+
+	/*
+	for (const auto& glTFMesh : doc.meshes.Elements())
+	{
+		for (const auto& meshPrimitive : glTFMesh.primitives)
+		{
+			//モデル用メッシュ生成
+			ModelMesh mesh;
+			mesh.mesh = std::make_shared<Mesh<ModelMesh::Vertex_Model>>();
+
+			//頂点 & インデックス情報
+			LoadGLTFPrimitive(mesh, meshPrimitive, resourceReader, doc);
+
+			int materialIdx = int(doc.materials.GetIndex(meshPrimitive.materialId));
+
+			for (auto& m : doc.materials.Elements())
+			{
+				auto material = std::make_shared<Material>();
+				auto textureId = m.metallicRoughness.baseColorTexture.textureId;
+				if (textureId.empty())
+				{
+					textureId = m.normalTexture.textureId;
+				}
+				auto& texture = doc.textures.Get(textureId);
+				auto& image = doc.images.Get(texture.imageId);
+				auto imageBufferView = doc.bufferViews.Get(image.bufferViewId);
+				auto imageData = resourceReader->ReadBinaryData<char>(doc, imageBufferView);
+				material->textures[COLOR_TEX].texBuff = D3D12App::Instance()->GenerateTextureBuffer(imageData);
+				mesh.material = material;
+
+				material->CreateBuff();
+			}
+
+			mesh.mesh->CreateBuff();
+			result->meshes.emplace_back(mesh);
+		}
+	}
+	*/
 
 	return result;
 }
