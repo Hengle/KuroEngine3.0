@@ -680,6 +680,77 @@ std::shared_ptr<TextureBuffer> D3D12App::GenerateTextureBuffer(const Vec2<int>& 
 	return result;
 }
 
+std::shared_ptr<TextureBuffer> D3D12App::GenerateTextureBuffer(const std::vector<char>& ImgData)
+{
+	// VRM なので png/jpeg などのファイルを想定し、WIC で読み込む.
+	ComPtr<ID3D12Resource1> staging;
+	HRESULT hr;
+	ScratchImage image;
+	hr = LoadFromWICMemory(ImgData.data(), ImgData.size(), WIC_FLAGS_NONE, nullptr, image);
+	KuroFunc::ErrorMessage(FAILED(hr), "D3D12App", "GenerateTextureBuffer", "WICメモリのロードに失敗\n");
+
+	auto metadata = image.GetMetadata();
+
+	const Image* img = image.GetImage(0, 0, 0);	//生データ抽出
+
+	//テクスチャリソース設定
+	CD3DX12_RESOURCE_DESC texDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+		metadata.format,	//RGBAフォーマット
+		metadata.width,
+		(UINT)metadata.height,
+		(UINT16)metadata.arraySize,
+		(UINT16)metadata.mipLevels);
+
+	//リソースバリア
+	auto barrier = D3D12_RESOURCE_STATE_GENERIC_READ;
+
+	//テクスチャ用リソースバッファの生成
+	ComPtr<ID3D12Resource1>buff;
+	CD3DX12_HEAP_PROPERTIES heapPropForTex(D3D12_CPU_PAGE_PROPERTY_WRITE_BACK, D3D12_MEMORY_POOL_L0);
+	hr = device->CreateCommittedResource(
+		&heapPropForTex,
+		D3D12_HEAP_FLAG_NONE,
+		&texDesc,
+		barrier,
+		nullptr,
+		IID_PPV_ARGS(&buff));
+	KuroFunc::ErrorMessage(FAILED(hr), "D3D12App", "GenerateTextureBuffer", "ロード画像テクスチャバッファ生成に失敗\n");
+
+	//名前セット
+	//buff->SetName(wtexpath.c_str());
+
+	//テクスチャバッファにデータ転送
+	hr = buff->WriteToSubresource(
+		0,
+		nullptr,	//全領域へコピー
+		img->pixels,	//元データアドレス
+		(UINT)img->rowPitch,	//1ラインサイズ
+		(UINT)img->slicePitch	//１枚サイズ
+	);
+	KuroFunc::ErrorMessage(FAILED(hr), "D3D12App", "GenerateTextureBuffer", "ロード画像テクスチャバッファへのデータ転送に失敗\n");
+
+	//シェーダーリソースビュー作成
+	descHeapCBV_SRV_UAV->CreateSRV(device, buff, metadata.format);
+
+	//ビューを作成した位置のディスクリプタハンドルを取得
+	DescHandles handles(descHeapCBV_SRV_UAV->GetCpuHandleTail(), descHeapCBV_SRV_UAV->GetGpuHandleTail());
+
+	//専用のシェーダーリソースクラスにまとめる
+	std::shared_ptr<TextureBuffer>result;
+	result = std::make_shared<TextureBuffer>(buff, barrier, handles, texDesc);
+
+	//テクスチャ用のリソースバリアに変更
+	result->ChangeBarrier(commandList, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+	//作成したカラーテクスチャ情報を記録
+	LoadImgTexture loadImgTexData;
+	//loadImgTexData.path = LoadImgFilePath;
+	loadImgTexData.textures = { result };
+	loadImgTextures.emplace_back(loadImgTexData);
+
+	return result;
+}
+
 std::vector<std::shared_ptr<TextureBuffer>> D3D12App::GenerateTextureBuffer(const std::string& LoadImgFilePath, const int& AllNum, const Vec2<int>& SplitNum)
 {
 	auto sourceTexture = GenerateTextureBuffer(LoadImgFilePath);

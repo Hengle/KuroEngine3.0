@@ -358,7 +358,7 @@ void Importer::LoadFbxMaterial(const std::string& Dir, ModelMesh& ModelMesh, Fbx
 			{
 				auto path = Dir + GetFileName(emissiveTex->GetRelativeFileName());
 				//エミッシブマップ
-				newMaterial->textures[EMISSIVE_TEX].path = path;
+				newMaterial->texBuff[EMISSIVE_TEX] = D3D12App::Instance()->GenerateTextureBuffer(path);
 			}
 		}
 
@@ -386,7 +386,7 @@ void Importer::LoadFbxMaterial(const std::string& Dir, ModelMesh& ModelMesh, Fbx
 		if (tex != nullptr)
 		{
 			auto path = Dir + GetFileName(tex->GetRelativeFileName());
-			newMaterial->textures[COLOR_TEX].path = path;
+			newMaterial->texBuff[COLOR_TEX] = D3D12App::Instance()->GenerateTextureBuffer(path);
 		}
 
 		ModelMesh.material = newMaterial;
@@ -673,6 +673,7 @@ std::shared_ptr<Model> Importer::CheckAlreadyExsit(const std::string& Dir, const
 	return std::shared_ptr<Model>();
 }
 
+/*
 std::shared_ptr<Model> Importer::LoadHSMModel(const std::string& Dir, const std::string& FileName, const std::string& Path)
 {
 	static const std::string FUNC_NAME = "LoadHSMModel";
@@ -878,6 +879,7 @@ void Importer::SaveHSMModel(const std::string& FileNameTail, std::shared_ptr<Mod
 
 	fclose(fp);
 }
+*/
 
 Importer::Importer()
 {
@@ -898,6 +900,8 @@ Importer::Importer()
 
 std::shared_ptr<Model> Importer::LoadFBXModel(const std::string& Dir, const std::string& FileName)
 {
+	printf("glTFロード\nDir : %s , FileName : %s\n", Dir.c_str(), FileName.c_str());
+
 	static const std::string FUNC_NAME = "LoadFBX";
 	static const std::string HSM_TAIL = "_fbx";
 
@@ -918,6 +922,7 @@ std::shared_ptr<Model> Importer::LoadFBXModel(const std::string& Dir, const std:
 	//ファイルパス
 	const auto path = Dir + FileName;
 
+	/*
 	//fbxファイルの最終更新日時を読み取る
 	FILETIME fbxLastWriteTime;
 	HANDLE fbxFile = CreateFile(
@@ -951,7 +956,7 @@ std::shared_ptr<Model> Importer::LoadFBXModel(const std::string& Dir, const std:
 			return LoadHSMModel(Dir, FileName, hsmPath);
 		}
 	}
-
+	*/
 
 	//ファイルの存在を確認
 	ErrorMessage(FUNC_NAME, !KuroFunc::ExistFile(path), "ファイルが存在しません\n");
@@ -1052,6 +1057,7 @@ std::shared_ptr<Model> Importer::LoadFBXModel(const std::string& Dir, const std:
 #include<sstream>
 std::shared_ptr<Model> Importer::LoadGLTFModel(const std::string& Dir, const std::string& FileName)
 {
+	printf("glTFロード\nDir : %s , FileName : %s\n", Dir.c_str(), FileName.c_str());
 	std::shared_ptr<Model>result = std::make_shared<Model>(Dir, FileName);
 
 	auto modelFilePath = std::experimental::filesystem::path(Dir + FileName);
@@ -1116,7 +1122,62 @@ std::shared_ptr<Model> Importer::LoadGLTFModel(const std::string& Dir, const std
 	PrintDocumentInfo(doc);
 	PrintResourceInfo(doc, *resourceReader);
 
+	//スケルトン読み込み途中
 	/*
+	for (const auto& glTFSkin : doc.skins.Elements())
+	{
+		auto& idBoneOffsetMat = glTFSkin.inverseBindMatricesAccessorId;
+		auto& accBoneOffsetMat = doc.accessors.Get(idBoneOffsetMat);
+		auto loadOffsetMat = resourceReader->ReadBinaryData<float>(doc, accBoneOffsetMat);
+		int boneNum = accBoneOffsetMat.count;
+		for (int i = 0; i < boneNum; ++i)
+		{
+			XMMATRIX offsetMatrix;
+			for (int j = 0; j < 4; ++j)
+			{
+				const int idOffset = 4 * 4 * i + 4 * j;
+				offsetMatrix.r[j].m128_f32[0] = loadOffsetMat[idOffset];
+				offsetMatrix.r[j].m128_f32[1] = loadOffsetMat[idOffset + 1];
+				offsetMatrix.r[j].m128_f32[2] = loadOffsetMat[idOffset + 2];
+				offsetMatrix.r[j].m128_f32[3] = loadOffsetMat[idOffset + 3];
+			}
+			int asdas = 0;
+		}
+	}
+	*/
+
+	//マテリアル読み込み
+	std::vector<std::shared_ptr<Material>>loadMaterials;
+	for (auto& m : doc.materials.Elements())
+	{
+		auto material = std::make_shared<Material>();
+		auto textureId = m.metallicRoughness.baseColorTexture.textureId;
+		if (textureId.empty())
+		{
+			textureId = m.normalTexture.textureId;
+		}
+		auto& texture = doc.textures.Get(textureId);
+		auto& image = doc.images.Get(texture.imageId);
+
+		//テクスチャ画像ファイル読み込み
+		if (!image.uri.empty())
+		{
+			std::string path = Dir + image.uri;
+			material->texBuff[COLOR_TEX] = D3D12App::Instance()->GenerateTextureBuffer(path);
+		}
+		//テクスチャ画像がgltfに埋め込まれている
+		else if (!image.bufferViewId.empty())
+		{
+			auto imageBufferView = doc.bufferViews.Get(image.bufferViewId);
+			auto imageData = resourceReader->ReadBinaryData<char>(doc, imageBufferView);
+			std::string path = "glTF - Load (" + image.mimeType + ") - " + image.name;
+			material->texBuff[COLOR_TEX] = D3D12App::Instance()->GenerateTextureBuffer(imageData);
+		}
+
+		material->CreateBuff();
+		loadMaterials.emplace_back(material);
+	}
+
 	for (const auto& glTFMesh : doc.meshes.Elements())
 	{
 		for (const auto& meshPrimitive : glTFMesh.primitives)
@@ -1126,33 +1187,15 @@ std::shared_ptr<Model> Importer::LoadGLTFModel(const std::string& Dir, const std
 			mesh.mesh = std::make_shared<Mesh<ModelMesh::Vertex_Model>>();
 
 			//頂点 & インデックス情報
-			LoadGLTFPrimitive(mesh, meshPrimitive, resourceReader, doc);
+			LoadGLTFPrimitive(mesh, meshPrimitive, *resourceReader, doc);
 
 			int materialIdx = int(doc.materials.GetIndex(meshPrimitive.materialId));
-
-			for (auto& m : doc.materials.Elements())
-			{
-				auto material = std::make_shared<Material>();
-				auto textureId = m.metallicRoughness.baseColorTexture.textureId;
-				if (textureId.empty())
-				{
-					textureId = m.normalTexture.textureId;
-				}
-				auto& texture = doc.textures.Get(textureId);
-				auto& image = doc.images.Get(texture.imageId);
-				auto imageBufferView = doc.bufferViews.Get(image.bufferViewId);
-				auto imageData = resourceReader->ReadBinaryData<char>(doc, imageBufferView);
-				material->textures[COLOR_TEX].texBuff = D3D12App::Instance()->GenerateTextureBuffer(imageData);
-				mesh.material = material;
-
-				material->CreateBuff();
-			}
+			mesh.material = loadMaterials[materialIdx];
 
 			mesh.mesh->CreateBuff();
 			result->meshes.emplace_back(mesh);
 		}
 	}
-	*/
 
 	return result;
 }

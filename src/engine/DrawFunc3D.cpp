@@ -60,7 +60,7 @@ void DrawFunc3D::DrawNonShadingModel(const std::weak_ptr<Model> Model, Transform
 			{
 				Cam.GetBuff(),
 				TRANSFORM_BUFF[DRAW_NON_SHADING_COUNT],
-				mesh.material->textures[COLOR_TEX].texBuff,
+				mesh.material->texBuff[COLOR_TEX],
 			},
 			{ CBV,CBV,SRV },
 			Transform.GetPos().z,

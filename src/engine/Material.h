@@ -32,12 +32,7 @@ public:
 	}constData;
 	std::shared_ptr<ConstantBuffer>buff;
 
-	struct Tex
-	{
-		std::string path;
-		std::shared_ptr<TextureBuffer>texBuff;
-	};
-	Tex textures[MATERIAL_TEX_TYPE_NUM];
+	std::shared_ptr<TextureBuffer> texBuff[MATERIAL_TEX_TYPE_NUM];
 
 	Material();
 	void CreateBuff();

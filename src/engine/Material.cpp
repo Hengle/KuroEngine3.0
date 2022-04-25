@@ -11,7 +11,7 @@ Material::Material()
 	};
 	for (int i = 0; i < MATERIAL_TEX_TYPE_NUM; ++i)
 	{
-		textures[i].texBuff = DEFAULT[i];
+		texBuff[i] = DEFAULT[i];
 	}
 }
 
@@ -21,11 +21,5 @@ void Material::CreateBuff()
 	if (!invalid)return;
 	buff = D3D12App::Instance()->GenerateConstantBuffer(sizeof(ConstData), 1, &constData, name.c_str());
 	
-	for (int i = 0; i < MATERIAL_TEX_TYPE_NUM; ++i)
-	{
-		if (textures[i].path.empty())continue;
-		textures[i].texBuff = D3D12App::Instance()->GenerateTextureBuffer(textures[i].path);
-	}
-
 	invalid = false;
 }
