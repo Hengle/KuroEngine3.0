@@ -3,10 +3,86 @@
 #include"Model.h"
 #include"LightManager.h"
 
+//DrawLine
+int DrawFunc3D::DRAW_LINE_COUNT = 0;
 //DrawNonShadingModel
 int DrawFunc3D::DRAW_NON_SHADING_COUNT = 0;
 //DrawShadingModel
 int DrawFunc3D::DRAW_SHADING_COUNT = 0;
+
+void DrawFunc3D::DrawLine(Camera& Cam, const Vec3<float>& From, const Vec3<float>& To, const Color& LineColor, const float& Thickness, const AlphaBlendMode& BlendMode)
+{
+	static std::shared_ptr<GraphicsPipeline>PIPELINE[AlphaBlendModeNum];
+	static std::vector<std::shared_ptr<VertexBuffer>>LINE_VERTEX_BUFF;
+
+	//DrawLine専用頂点
+	class LineVertex
+	{
+	public:
+		Vec3<float>fromPos;
+		Vec3<float>toPos;
+		Color color;
+		float thickness;
+		LineVertex(const Vec3<float>& FromPos, const Vec3<float>& ToPos, const Color& Color, const float& Thickness)
+			:fromPos(FromPos), toPos(ToPos), color(Color), thickness(Thickness) {}
+	};
+
+	//パイプライン未生成
+	if (!PIPELINE[BlendMode])
+	{
+		//パイプライン設定
+		static PipelineInitializeOption PIPELINE_OPTION(D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT, D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
+		PIPELINE_OPTION.calling = false;
+
+		//シェーダー情報
+		static Shaders SHADERS;
+		SHADERS.vs = D3D12App::Instance()->CompileShader("resource/engine/DrawLine3D.hlsl", "VSmain", "vs_5_0");
+		SHADERS.gs = D3D12App::Instance()->CompileShader("resource/engine/DrawLine3D.hlsl", "GSmain", "gs_5_0");
+		SHADERS.ps = D3D12App::Instance()->CompileShader("resource/engine/DrawLine3D.hlsl", "PSmain", "ps_5_0");
+
+		//インプットレイアウト
+		static std::vector<InputLayoutParam>INPUT_LAYOUT =
+		{
+			InputLayoutParam("FROM_POS",DXGI_FORMAT_R32G32B32_FLOAT),
+			InputLayoutParam("TO_POS",DXGI_FORMAT_R32G32B32_FLOAT),
+			InputLayoutParam("COLOR",DXGI_FORMAT_R32G32B32A32_FLOAT),
+			InputLayoutParam("THICKNESS",DXGI_FORMAT_R32_FLOAT),
+		};
+
+		//ルートパラメータ
+		static std::vector<RootParam>ROOT_PARAMETER =
+		{
+			RootParam(D3D12_DESCRIPTOR_RANGE_TYPE_CBV,"カメラ情報バッファ"),
+		};
+
+		//レンダーターゲット描画先情報
+		std::vector<RenderTargetInfo>RENDER_TARGET_INFO = { RenderTargetInfo(D3D12App::Instance()->GetBackBuffFormat(), BlendMode) };
+		//パイプライン生成
+		PIPELINE[BlendMode] = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, INPUT_LAYOUT, ROOT_PARAMETER, RENDER_TARGET_INFO, WrappedSampler(false, false));
+	}
+
+	KuroEngine::Instance().Graphics().SetPipeline(PIPELINE[BlendMode]);
+
+	if (LINE_VERTEX_BUFF.size() < (DRAW_LINE_COUNT + 1))
+	{
+		LINE_VERTEX_BUFF.emplace_back(D3D12App::Instance()->GenerateVertexBuffer(sizeof(LineVertex), 1, nullptr, ("DrawLine3D -" + std::to_string(DRAW_LINE_COUNT)).c_str()));
+	}
+
+	LineVertex vertex(From, To, LineColor, Thickness);
+	LINE_VERTEX_BUFF[DRAW_LINE_COUNT]->Mapping(&vertex);
+	Vec3<float>center = From.GetCenter(To);
+
+	KuroEngine::Instance().Graphics().ObjectRender(
+		LINE_VERTEX_BUFF[DRAW_LINE_COUNT],
+		{
+			Cam.GetBuff(),
+		},
+		{ CBV },
+		center.z,
+		true);
+
+	DRAW_LINE_COUNT++;
+}
 
 void DrawFunc3D::DrawNonShadingModel(const std::weak_ptr<Model> Model, Transform& Transform, Camera& Cam, const AlphaBlendMode& BlendMode)
 {
@@ -14,7 +90,7 @@ void DrawFunc3D::DrawNonShadingModel(const std::weak_ptr<Model> Model, Transform
 	static std::vector<std::shared_ptr<ConstantBuffer>>TRANSFORM_BUFF;
 
 	//パイプライン未生成
-	if (!PIPELINE[0])
+	if (!PIPELINE[BlendMode])
 	{
 		//パイプライン設定
 		static PipelineInitializeOption PIPELINE_OPTION(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -33,12 +109,9 @@ void DrawFunc3D::DrawNonShadingModel(const std::weak_ptr<Model> Model, Transform
 		};
 
 		//レンダーターゲット描画先情報
-		for (int i = 0; i < AlphaBlendModeNum; ++i)
-		{
-			std::vector<RenderTargetInfo>RENDER_TARGET_INFO = { RenderTargetInfo(D3D12App::Instance()->GetBackBuffFormat(), (AlphaBlendMode)i) };
-			//パイプライン生成
-			PIPELINE[i] = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, ModelMesh::Vertex_Model::GetInputLayout(), ROOT_PARAMETER, RENDER_TARGET_INFO, WrappedSampler(false, false));
-		}
+		std::vector<RenderTargetInfo>RENDER_TARGET_INFO = { RenderTargetInfo(D3D12App::Instance()->GetBackBuffFormat(), BlendMode) };
+		//パイプライン生成
+		PIPELINE[BlendMode] = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, ModelMesh::Vertex_Model::GetInputLayout(), ROOT_PARAMETER, RENDER_TARGET_INFO, WrappedSampler(false, false));
 	}
 
 	KuroEngine::Instance().Graphics().SetPipeline(PIPELINE[BlendMode]);
@@ -77,7 +150,7 @@ void DrawFunc3D::DrawShadingModel(LightManager& LigManager, const std::weak_ptr<
 	static std::vector<std::shared_ptr<ConstantBuffer>>TRANSFORM_BUFF;
 
 	//パイプライン未生成
-	if (!PIPELINE[0])
+	if (!PIPELINE[BlendMode])
 	{
 		//パイプライン設定
 		static PipelineInitializeOption PIPELINE_OPTION(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -103,12 +176,9 @@ void DrawFunc3D::DrawShadingModel(LightManager& LigManager, const std::weak_ptr<
 		};
 
 		//レンダーターゲット描画先情報
-		for (int i = 0; i < AlphaBlendModeNum; ++i)
-		{
-			std::vector<RenderTargetInfo>RENDER_TARGET_INFO = { RenderTargetInfo(D3D12App::Instance()->GetBackBuffFormat(), (AlphaBlendMode)i) };
-			//パイプライン生成
-			PIPELINE[i] = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, ModelMesh::Vertex_Model::GetInputLayout(), ROOT_PARAMETER, RENDER_TARGET_INFO, WrappedSampler(false, false));
-		}
+		std::vector<RenderTargetInfo>RENDER_TARGET_INFO = { RenderTargetInfo(D3D12App::Instance()->GetBackBuffFormat(), BlendMode) };
+		//パイプライン生成
+		PIPELINE[BlendMode] = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, ModelMesh::Vertex_Model::GetInputLayout(), ROOT_PARAMETER, RENDER_TARGET_INFO, WrappedSampler(false, false));
 	}
 
 	KuroEngine::Instance().Graphics().SetPipeline(PIPELINE[BlendMode]);

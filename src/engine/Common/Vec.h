@@ -150,6 +150,12 @@ struct Vec3
 		y /= len;
 		z /= len;
 	};
+	//’†ŠÔ’n“_Žæ“¾
+	Vec3<float>GetCenter(const Vec3& To)const {
+		const float distHalf = this->Distance(To) / 2.0f;
+		Vec3<float> vec = To - *this;
+		return *this + vec.GetNormal() * distHalf;
+	}
 	DirectX::XMFLOAT3 ConvertXMFLOAT3() {
 		return DirectX::XMFLOAT3(x, y, z);
 	};

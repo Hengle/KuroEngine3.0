@@ -15,6 +15,11 @@ void GameScene::OnInitialize()
 
 void GameScene::OnUpdate()
 {
+	if (UsersInput::Instance()->KeyOnTrigger(DIK_I))
+	{
+		debugCam.Init({ 0,1,-3 }, { 0,1,0 });
+	}
+
 	static const float UINT = 0.1f;
 	auto ptLigPos = ptLig.GetPos();
 	if (UsersInput::Instance()->KeyInput(DIK_W))
@@ -78,6 +83,7 @@ void GameScene::OnDraw()
 
 	//DrawFunc3D::DrawNonShadingModel(testModel, trans, debugCam);
 	//DrawFunc3D::DrawNonShadingModel(testglTF0, trans, debugCam);
+	DrawFunc3D::DrawLine(debugCam, { 2,3,0 }, { 0,3,10 }, Color(1.0f, 0.0f, 0.0f, 1.0f), 0.3f);
 }
 
 void GameScene::OnImguiDebug()
