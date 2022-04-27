@@ -31,7 +31,7 @@ struct GSOutput
 //VecA‚ğVecB‚ÉŒX‚¯‚é‰ñ“]s—ñ
 matrix Rotate(float3 VecA, float3 VecB)
 {
-    float3 a = VecA.xyz;
+    float3 a = VecA;
     float3 b = VecB;
     a = normalize(a);
     b = normalize(b);
@@ -96,8 +96,6 @@ GSOutput Get(float4 Pos, float3 Offset, matrix Rotate, float4 Color)
 {
     GSOutput element;
     
-    Offset.y = Offset.z;
-    Offset.z = 0.0f;
     float4 offset = float4(Offset, 0.0f);
     float4 p = Pos + mul(Rotate, offset);
     //float4 p = Pos + offset;

@@ -83,7 +83,7 @@ void GameScene::OnDraw()
 
 	//DrawFunc3D::DrawNonShadingModel(testModel, trans, debugCam);
 	//DrawFunc3D::DrawNonShadingModel(testglTF0, trans, debugCam);
-	DrawFunc3D::DrawLine(debugCam, { 2,3,0 }, { 0,3,10 }, Color(1.0f, 0.0f, 0.0f, 1.0f), 0.3f);
+	DrawFunc3D::DrawLine(debugCam, { 0,0,0 }, ptLig.GetPos(), Color(1.0f, 0.0f, 0.0f, 1.0f), 0.3f);
 }
 
 void GameScene::OnImguiDebug()
