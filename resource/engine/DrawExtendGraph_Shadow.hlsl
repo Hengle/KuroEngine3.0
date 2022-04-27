@@ -118,7 +118,6 @@ PSOutput PSmain(GSOutput input)
     float3 vnormal = mul(parallelProjMat, float4(normal, 1.0f)).xyz;
     
     //ライトの影響
-    //float3 ligEffect = { 0.3f, 0.3f, 0.3f };
     float3 ligEffect = { 0.0f, 0.0f, 0.0f };
     
     //ディレクションライト
