@@ -484,25 +484,31 @@ void Importer::LoadGLTFPrimitive(ModelMesh& ModelMesh, const Microsoft::glTF::Me
 	// 頂点位置情報アクセッサの取得
 	auto& idPos = GLTFPrimitive.GetAttributeAccessorId(ACCESSOR_POSITION);
 	auto& accPos = Doc.accessors.Get(idPos);
+	auto vertPos = Reader.ReadBinaryData<float>(Doc, accPos);
 	// 法線情報アクセッサの取得
 	auto& idNrm = GLTFPrimitive.GetAttributeAccessorId(ACCESSOR_NORMAL);
 	auto& accNrm = Doc.accessors.Get(idNrm);
+	auto vertNrm = Reader.ReadBinaryData<float>(Doc, accNrm);
 	// テクスチャ座標情報アクセッサの取得
 	auto& idUV = GLTFPrimitive.GetAttributeAccessorId(ACCESSOR_TEXCOORD_0);
 	auto& accUV = Doc.accessors.Get(idUV);
-
-	auto& idJoint = GLTFPrimitive.GetAttributeAccessorId(ACCESSOR_JOINTS_0);
-	auto& accJoint = Doc.accessors.Get(idJoint);
-
-	auto& idWeight = GLTFPrimitive.GetAttributeAccessorId(ACCESSOR_WEIGHTS_0);
-	auto& accWeight = Doc.accessors.Get(idWeight);
-
-	// アクセッサからデータ列を取得
-	auto vertPos = Reader.ReadBinaryData<float>(Doc, accPos);
-	auto vertNrm = Reader.ReadBinaryData<float>(Doc, accNrm);
 	auto vertUV = Reader.ReadBinaryData<float>(Doc, accUV);
-	auto vertJoint = Reader.ReadBinaryData<uint8_t>(Doc, accJoint);
-	auto vertWeight = Reader.ReadBinaryData<float>(Doc, accWeight);
+
+	std::vector<uint8_t>vertJoint;
+	if (GLTFPrimitive.HasAttribute(ACCESSOR_JOINTS_0))
+	{
+		auto& idJoint = GLTFPrimitive.GetAttributeAccessorId(ACCESSOR_JOINTS_0);
+		auto& accJoint = Doc.accessors.Get(idJoint);
+		vertJoint = Reader.ReadBinaryData<uint8_t>(Doc, accJoint);
+	}
+
+	std::vector<float>vertWeight;
+	if (GLTFPrimitive.HasAttribute(ACCESSOR_WEIGHTS_0))
+	{
+		auto& idWeight = GLTFPrimitive.GetAttributeAccessorId(ACCESSOR_WEIGHTS_0);
+		auto& accWeight = Doc.accessors.Get(idWeight);
+		vertWeight = Reader.ReadBinaryData<float>(Doc, accWeight);
+	}
 
 	auto vertexCount = accPos.count;
 	for (uint32_t i = 0; i < vertexCount; ++i)
@@ -517,11 +523,17 @@ void Importer::LoadGLTFPrimitive(ModelMesh& ModelMesh, const Microsoft::glTF::Me
 		vertex.normal = { vertNrm[vid0],vertNrm[vid1],vertNrm[vid2] };
 		vertex.uv = { vertUV[tid0],vertUV[tid1] };
 
-		vertex.boneWeight = { vertWeight[jid0],vertWeight[jid1],vertWeight[jid2],vertWeight[jid3] };
-		if (vertex.boneWeight.x)vertex.boneIdx.x = static_cast<signed short>(vertJoint[jid0]);
-		if (vertex.boneWeight.y)vertex.boneIdx.y = static_cast<signed short>(vertJoint[jid1]);
-		if (vertex.boneWeight.z)vertex.boneIdx.z = static_cast<signed short>(vertJoint[jid2]);
-		if (vertex.boneWeight.w)vertex.boneIdx.w = static_cast<signed short>(vertJoint[jid3]);
+		if (!vertJoint.empty())
+		{
+			if (vertex.boneWeight.x)vertex.boneIdx.x = static_cast<signed short>(vertJoint[jid0]);
+			if (vertex.boneWeight.y)vertex.boneIdx.y = static_cast<signed short>(vertJoint[jid1]);
+			if (vertex.boneWeight.z)vertex.boneIdx.z = static_cast<signed short>(vertJoint[jid2]);
+			if (vertex.boneWeight.w)vertex.boneIdx.w = static_cast<signed short>(vertJoint[jid3]);
+		}
+		if (!vertWeight.empty())
+		{
+			vertex.boneWeight = { vertWeight[jid0],vertWeight[jid1],vertWeight[jid2],vertWeight[jid3] };
+		}
 		ModelMesh.mesh->vertices.emplace_back(vertex);
 	}
 
@@ -1151,27 +1163,30 @@ std::shared_ptr<Model> Importer::LoadGLTFModel(const std::string& Dir, const std
 	for (auto& m : doc.materials.Elements())
 	{
 		auto material = std::make_shared<Material>();
-		auto textureId = m.metallicRoughness.baseColorTexture.textureId;
-		if (textureId.empty())
-		{
-			textureId = m.normalTexture.textureId;
-		}
-		auto& texture = doc.textures.Get(textureId);
-		auto& image = doc.images.Get(texture.imageId);
 
-		//テクスチャ画像ファイル読み込み
-		if (!image.uri.empty())
+		//カラーテクスチャ
+		auto textureId = m.metallicRoughness.baseColorTexture.textureId;
+		if (textureId.empty())textureId = m.normalTexture.textureId;
+
+		if (!textureId.empty())
 		{
-			std::string path = Dir + image.uri;
-			material->texBuff[COLOR_TEX] = D3D12App::Instance()->GenerateTextureBuffer(path);
-		}
-		//テクスチャ画像がgltfに埋め込まれている
-		else if (!image.bufferViewId.empty())
-		{
-			auto imageBufferView = doc.bufferViews.Get(image.bufferViewId);
-			auto imageData = resourceReader->ReadBinaryData<char>(doc, imageBufferView);
-			std::string path = "glTF - Load (" + image.mimeType + ") - " + image.name;
-			material->texBuff[COLOR_TEX] = D3D12App::Instance()->GenerateTextureBuffer(imageData);
+			auto& texture = doc.textures.Get(textureId);
+			auto& image = doc.images.Get(texture.imageId);
+
+			//テクスチャ画像ファイル読み込み
+			if (!image.uri.empty())
+			{
+				std::string path = Dir + image.uri;
+				material->texBuff[COLOR_TEX] = D3D12App::Instance()->GenerateTextureBuffer(path);
+			}
+			//テクスチャ画像がgltfに埋め込まれている
+			else if (!image.bufferViewId.empty())
+			{
+				auto imageBufferView = doc.bufferViews.Get(image.bufferViewId);
+				auto imageData = resourceReader->ReadBinaryData<char>(doc, imageBufferView);
+				std::string path = "glTF - Load (" + image.mimeType + ") - " + image.name;
+				material->texBuff[COLOR_TEX] = D3D12App::Instance()->GenerateTextureBuffer(imageData);
+			}
 		}
 
 		material->CreateBuff();

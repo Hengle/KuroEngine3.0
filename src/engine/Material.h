@@ -16,9 +16,9 @@ public:
 	struct ConstData
 	{
 		//Lambert
-		Vec3<float> ambient = { 1, 1, 1 };	//環境光(全方向から当たる光)
+		Vec3<float> ambient = { 0,0,0 };	//環境光(全方向から当たる光)
 		float ambientFactor = 1.0f;			//強度(weight)
-		Vec3<float> diffuse = { 0, 0, 0 };	//拡散反射光(モデルが本来持っている色味)
+		Vec3<float> diffuse = { 1.0f,1.0f,1.0f };	//拡散反射光(モデルが本来持っている色味)
 		float diffuseFactor = 1.0f;
 		Vec3<float> emissive = { 0,0,0 };		//放射光(モデル自身が放つ光、暗い環境で光る)
 		float emissiveFactor = 1.0f;
