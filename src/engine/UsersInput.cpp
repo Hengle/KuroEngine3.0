@@ -78,16 +78,20 @@ void UsersInput::Update(const HWND& Hwnd, const Vec2<float>& WinSize)
 	mousePos.y = KuroFunc::Clamp(0, WinSize.y, mousePos.y);
 
 	//コントローラー
-	oldXinputState = xinputState;
-	ZeroMemory(&xinputState, sizeof(XINPUT_STATE));
-
-	DWORD dwResult = XInputGetState(0, &xinputState);
-	if (dwResult == ERROR_SUCCESS)
+	for (int i = 0; i < CONTROLLER_NUM; ++i)
 	{
+		oldXinputState[i] = xinputState[i];
+		ZeroMemory(&xinputState[i], sizeof(XINPUT_STATE));
+
+		DWORD dwResult = XInputGetState(i, &xinputState[i]);
+
+		//コントローラーが接続されていない
+		if (dwResult != ERROR_SUCCESS)continue;
+
 		//コントローラーが接続されている
-		if (0 < shakeTimer)
+		if (0 < shakeTimer[i])
 		{
-			shakeTimer--;
+			shakeTimer[i]--;
 			XINPUT_VIBRATION vibration;
 			ZeroMemory(&vibration, sizeof(XINPUT_VIBRATION));
 
@@ -98,44 +102,40 @@ void UsersInput::Update(const HWND& Hwnd, const Vec2<float>& WinSize)
 			}
 			else
 			{
-				vibration.wLeftMotorSpeed = 65535.0f * shakePower; // use any value between 0-65535 here
-				vibration.wRightMotorSpeed = 65535.0f * shakePower; // use any value between 0-65535 here
+				vibration.wLeftMotorSpeed = 65535.0f * shakePower[i]; // use any value between 0-65535 here
+				vibration.wRightMotorSpeed = 65535.0f * shakePower[i]; // use any value between 0-65535 here
 			}
 			XInputSetState(dwResult, &vibration);
 		}
 	}
-	else
-	{
-		//コントローラーが接続されていない
-	}
 }
 
-bool UsersInput::OnTrigger(int KeyCode)
+bool UsersInput::KeyOnTrigger(int KeyCode)
 {
 	return (!oldkeys[KeyCode] && keys[KeyCode]);
 }
 
-bool UsersInput::Input(int KeyCode)
+bool UsersInput::KeyInput(int KeyCode)
 {
 	return keys[KeyCode];
 }
 
-bool UsersInput::OffTrigger(int KeyCode)
+bool UsersInput::KeyOffTrigger(int KeyCode)
 {
 	return (oldkeys[KeyCode] && !keys[KeyCode]);
 }
 
-bool UsersInput::OnTrigger(MOUSE_BUTTON Button)
+bool UsersInput::MouseOnTrigger(MOUSE_BUTTON Button)
 {
 	return (!oldMouseState.rgbButtons[Button] && mouseState.rgbButtons[Button]);
 }
 
-bool UsersInput::Input(MOUSE_BUTTON Button)
+bool UsersInput::MouseInput(MOUSE_BUTTON Button)
 {
 	return mouseState.rgbButtons[Button];
 }
 
-bool UsersInput::OffTrigger(MOUSE_BUTTON Button)
+bool UsersInput::MouseOffTrigger(MOUSE_BUTTON Button)
 {
 	return (oldMouseState.rgbButtons[Button] && !mouseState.rgbButtons[Button]);
 }
@@ -170,42 +170,42 @@ UsersInput::MouseMove UsersInput::GetMouseMove()
 //	return mouseRay;
 //}
 
-bool UsersInput::OnTrigger(XBOX_BUTTON Button)
+bool UsersInput::ControllerOnTrigger(const int& ControllerIdx, XBOX_BUTTON Button)
 {
 	//トリガー
 	if (Button == LT)
 	{
-		return oldXinputState.Gamepad.bLeftTrigger <= XINPUT_GAMEPAD_TRIGGER_THRESHOLD
-			&& Input(Button);
+		return oldXinputState[ControllerIdx].Gamepad.bLeftTrigger <= XINPUT_GAMEPAD_TRIGGER_THRESHOLD
+			&& ControllerInput(ControllerIdx, Button);
 	}
 	else if (Button == RT)
 	{
-		return oldXinputState.Gamepad.bRightTrigger <= XINPUT_GAMEPAD_TRIGGER_THRESHOLD
-			&& Input(Button);
+		return oldXinputState[ControllerIdx].Gamepad.bRightTrigger <= XINPUT_GAMEPAD_TRIGGER_THRESHOLD
+			&& ControllerInput(ControllerIdx, Button);
 	}
 	else
 	{
-		return !(oldXinputState.Gamepad.wButtons & Button)
-			&& Input(Button);
+		return !(oldXinputState[ControllerIdx].Gamepad.wButtons & Button)
+			&& ControllerInput(ControllerIdx, Button);
 	}
 	assert(0);
 	return false;
 }
 
-bool UsersInput::OnTrigger(XBOX_STICK StickInput, const float& DeadRange, const Vec2<float>& DeadRate)
+bool UsersInput::ControllerOnTrigger(const int& ControllerIdx, XBOX_STICK StickInput, const float& DeadRange, const Vec2<float>& DeadRate)
 {
 	Vec2<float>oldVec;
 	Vec2<float>vec;
 	bool isLeftStick = StickInput <= L_RIGHT;
 	if (isLeftStick)
 	{
-		oldVec = Vec2<float>(oldXinputState.Gamepad.sThumbLX, oldXinputState.Gamepad.sThumbLY);
-		vec = Vec2<float>(xinputState.Gamepad.sThumbLX, xinputState.Gamepad.sThumbLY);
+		oldVec = Vec2<float>(oldXinputState[ControllerIdx].Gamepad.sThumbLX, oldXinputState[ControllerIdx].Gamepad.sThumbLY);
+		vec = Vec2<float>(xinputState[ControllerIdx].Gamepad.sThumbLX, xinputState[ControllerIdx].Gamepad.sThumbLY);
 	}
 	else
 	{
-		oldVec = Vec2<float>(oldXinputState.Gamepad.sThumbRX, oldXinputState.Gamepad.sThumbRY);
-		vec = Vec2<float>(xinputState.Gamepad.sThumbRX, xinputState.Gamepad.sThumbRY);
+		oldVec = Vec2<float>(oldXinputState[ControllerIdx].Gamepad.sThumbRX, oldXinputState[ControllerIdx].Gamepad.sThumbRY);
+		vec = Vec2<float>(xinputState[ControllerIdx].Gamepad.sThumbRX, xinputState[ControllerIdx].Gamepad.sThumbRY);
 	}
 
 	if (!StickInDeadZone(oldVec, DeadRate))return false;
@@ -241,35 +241,35 @@ bool UsersInput::OnTrigger(XBOX_STICK StickInput, const float& DeadRange, const 
 	return result;
 }
 
-bool UsersInput::Input(XBOX_BUTTON Button)
+bool UsersInput::ControllerInput(const int& ControllerIdx, XBOX_BUTTON Button)
 {
 	if (Button == LT)
 	{
-		return XINPUT_GAMEPAD_TRIGGER_THRESHOLD < xinputState.Gamepad.bLeftTrigger;
+		return XINPUT_GAMEPAD_TRIGGER_THRESHOLD < xinputState[ControllerIdx].Gamepad.bLeftTrigger;
 	}
 	else if (Button == RT)
 	{
-		return XINPUT_GAMEPAD_TRIGGER_THRESHOLD < xinputState.Gamepad.bRightTrigger;
+		return XINPUT_GAMEPAD_TRIGGER_THRESHOLD < xinputState[ControllerIdx].Gamepad.bRightTrigger;
 	}
 	else
 	{
-		return xinputState.Gamepad.wButtons & Button;
+		return xinputState[ControllerIdx].Gamepad.wButtons & Button;
 	}
 	assert(0);
 	return false;
 }
 
-bool UsersInput::Input(XBOX_STICK StickInput, const float& DeadRange, const Vec2<float>& DeadRate)
+bool UsersInput::ControllerInput(const int& ControllerIdx, XBOX_STICK StickInput, const float& DeadRange, const Vec2<float>& DeadRate)
 {
 	Vec2<float>vec;
 	bool isLeftStick = StickInput <= L_RIGHT;
 	if (isLeftStick)
 	{
-		vec = Vec2<float>(xinputState.Gamepad.sThumbLX, xinputState.Gamepad.sThumbLY);
+		vec = Vec2<float>(xinputState[ControllerIdx].Gamepad.sThumbLX, xinputState[ControllerIdx].Gamepad.sThumbLY);
 	}
 	else
 	{
-		vec = Vec2<float>(xinputState.Gamepad.sThumbRX, xinputState.Gamepad.sThumbRY);
+		vec = Vec2<float>(xinputState[ControllerIdx].Gamepad.sThumbRX, xinputState[ControllerIdx].Gamepad.sThumbRY);
 	}
 
 	if (StickInDeadZone(vec, DeadRate))return false;
@@ -295,43 +295,43 @@ bool UsersInput::Input(XBOX_STICK StickInput, const float& DeadRange, const Vec2
 	return false;
 }
 
-bool UsersInput::OffTrigger(XBOX_BUTTON Button)
+bool UsersInput::ControllerOffTrigger(const int& ControllerIdx, XBOX_BUTTON Button)
 {
 	//トリガー
 	if (Button == LT)
 	{
-		return XINPUT_GAMEPAD_TRIGGER_THRESHOLD < oldXinputState.Gamepad.bLeftTrigger
-			&& !Input(Button);
+		return XINPUT_GAMEPAD_TRIGGER_THRESHOLD < oldXinputState[ControllerIdx].Gamepad.bLeftTrigger
+			&& !ControllerInput(ControllerIdx, Button);
 	}
 	else if (Button == RT)
 	{
-		return XINPUT_GAMEPAD_TRIGGER_THRESHOLD < oldXinputState.Gamepad.bRightTrigger
-			&& !Input(Button);
+		return XINPUT_GAMEPAD_TRIGGER_THRESHOLD < oldXinputState[ControllerIdx].Gamepad.bRightTrigger
+			&& !ControllerInput(ControllerIdx, Button);
 	}
 	//ボタン
 	else
 	{
-		return (oldXinputState.Gamepad.wButtons & Button)
-			&& !Input(Button);
+		return (oldXinputState[ControllerIdx].Gamepad.wButtons & Button)
+			&& !ControllerInput(ControllerIdx, Button);
 	}
 	assert(0);
 	return false;
 }
 
-bool UsersInput::OffTrigger(XBOX_STICK StickInput, const float& DeadRange, const Vec2<float>& DeadRate)
+bool UsersInput::ControllerOffTrigger(const int& ControllerIdx, XBOX_STICK StickInput, const float& DeadRange, const Vec2<float>& DeadRate)
 {
 	Vec2<float>oldVec;
 	Vec2<float>vec;
 	bool isLeftStick = StickInput <= L_RIGHT;
 	if (isLeftStick)
 	{
-		oldVec = Vec2<float>(oldXinputState.Gamepad.sThumbLX, oldXinputState.Gamepad.sThumbLY);
-		vec = Vec2<float>(xinputState.Gamepad.sThumbLX, xinputState.Gamepad.sThumbLY);
+		oldVec = Vec2<float>(oldXinputState[ControllerIdx].Gamepad.sThumbLX, oldXinputState[ControllerIdx].Gamepad.sThumbLY);
+		vec = Vec2<float>(xinputState[ControllerIdx].Gamepad.sThumbLX, xinputState[ControllerIdx].Gamepad.sThumbLY);
 	}
 	else
 	{
-		oldVec = Vec2<float>(oldXinputState.Gamepad.sThumbRX, oldXinputState.Gamepad.sThumbRY);
-		vec = Vec2<float>(xinputState.Gamepad.sThumbRX, xinputState.Gamepad.sThumbRY);
+		oldVec = Vec2<float>(oldXinputState[ControllerIdx].Gamepad.sThumbRX, oldXinputState[ControllerIdx].Gamepad.sThumbRY);
+		vec = Vec2<float>(xinputState[ControllerIdx].Gamepad.sThumbRX, xinputState[ControllerIdx].Gamepad.sThumbRY);
 	}
 
 	if (!StickInDeadZone(oldVec, DeadRate))return false;
@@ -368,23 +368,23 @@ bool UsersInput::OffTrigger(XBOX_STICK StickInput, const float& DeadRange, const
 	return result;
 }
 
-Vec2<float> UsersInput::GetLeftStickVec(const Vec2<float>& DeadRate)
+Vec2<float> UsersInput::GetLeftStickVec(const int& ControllerIdx, const Vec2<float>& DeadRate)
 {
-	Vec2<float>result(xinputState.Gamepad.sThumbLX, -xinputState.Gamepad.sThumbLY);
+	Vec2<float>result(xinputState[ControllerIdx].Gamepad.sThumbLX, -xinputState[ControllerIdx].Gamepad.sThumbLY);
 	StickInDeadZone(result, DeadRate);
 	return result.GetNormal();
 }
 
-Vec2<float> UsersInput::GetRightStickVec(const Vec2<float>& DeadRate)
+Vec2<float> UsersInput::GetRightStickVec(const int& ControllerIdx, const Vec2<float>& DeadRate)
 {
-	Vec2<float>result(xinputState.Gamepad.sThumbRX, -xinputState.Gamepad.sThumbRY);
+	Vec2<float>result(xinputState[ControllerIdx].Gamepad.sThumbRX, -xinputState[ControllerIdx].Gamepad.sThumbRY);
 	StickInDeadZone(result, DeadRate);
 	return result.GetNormal();
 }
 
-void UsersInput::ShakeController(const float& Power, const int& Span)
+void UsersInput::ShakeController(const int& ControllerIdx, const float& Power, const int& Span)
 {
 	if (!(0 < Power && Power <= 1.0f))assert(0);
-	shakePower = Power;
-	shakeTimer = Span;
+	shakePower[ControllerIdx] = Power;
+	shakeTimer[ControllerIdx] = Span;
 }

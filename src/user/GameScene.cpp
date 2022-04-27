@@ -27,10 +27,10 @@ void GameScene::OnInitialize()
 #include"KuroMath.h"
 void GameScene::OnUpdate()
 {
-	bool up = UsersInput::Instance()->Input(DIK_W);
-	bool down = UsersInput::Instance()->Input(DIK_S);
-	bool left = UsersInput::Instance()->Input(DIK_A);
-	bool right = UsersInput::Instance()->Input(DIK_D);
+	bool up = UsersInput::Instance()->KeyInput(DIK_W);
+	bool down = UsersInput::Instance()->KeyInput(DIK_S);
+	bool left = UsersInput::Instance()->KeyInput(DIK_A);
+	bool right = UsersInput::Instance()->KeyInput(DIK_D);
 	float skewRate = cos(Angle::ConvertToRadian(45));
 
 	//“™‘¬ˆÚ“®
@@ -75,7 +75,7 @@ void GameScene::OnUpdate()
 
 			//ƒWƒƒƒ“ƒv
 			static const float JUMP_POWER = -3.0f;
-			if (UsersInput::Instance()->OnTrigger(DIK_SPACE))
+			if (UsersInput::Instance()->KeyOnTrigger(DIK_SPACE))
 			{
 				accel.y = JUMP_POWER;
 			}
@@ -130,11 +130,11 @@ void GameScene::OnUpdate()
 	}
 }
 
-#include"DrawFunc.h"
+#include"DrawFunc2D.h"
 void GameScene::OnDraw()
 {
 	KuroEngine::Instance().Graphics().SetRenderTargets({ D3D12App::Instance()->GetBackBuffRenderTarget() });
-	DrawFunc::DrawCircle2D(pos, RADIUS, Color(), true);
+	DrawFunc2D::DrawCircle2D(pos, RADIUS, Color(), true);
 }
 
 void GameScene::OnImguiDebug()

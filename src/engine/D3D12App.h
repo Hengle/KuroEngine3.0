@@ -36,7 +36,7 @@ private:
 public:
 	static D3D12App* Instance()
 	{
-		if (INSTANCE == nullptr)ASSERT_MSG("D3D12Appのインスタンスを呼び出そうとしましたがnullptrでした\n");
+		KuroFunc::ErrorMessage(INSTANCE == nullptr, "D3D12App", "シングルトンインスタンス", "インスタンスがnullptrでした\n");
 		return INSTANCE;
 	}
 
@@ -93,7 +93,7 @@ private:
 public:
 	D3D12App(const HWND& Hwnd, const Vec2<int>& ScreenSize, const bool& UseHDR, const Color& ClearValue, const bool& IsFullScreen = false)
 	{
-		if (INSTANCE != nullptr)ASSERT_MSG("既にインスタンスがあります。D3D12Appは１つのインスタンスしか持てません\n");
+		KuroFunc::ErrorMessage(INSTANCE != nullptr, "D3D12App", "コンストラクタ", "既にインスタンスが生成済です\n");
 		INSTANCE = this;
 		Initialize(Hwnd, ScreenSize, UseHDR, ClearValue, IsFullScreen);
 	}
@@ -124,6 +124,7 @@ public:
 	std::shared_ptr<TextureBuffer>GenerateTextureBuffer(const Color& Color, const DXGI_FORMAT& Format = DXGI_FORMAT_R32G32B32A32_FLOAT, const int& Width = 1);	//単色塗りつぶしテクスチャ生成
 	std::shared_ptr<TextureBuffer>GenerateTextureBuffer(const std::string& LoadImgFilePath);	//画像ファイル
 	std::shared_ptr<TextureBuffer>GenerateTextureBuffer(const Vec2<int>&Size,const DXGI_FORMAT& Format,const char* Name = nullptr);	//コンピュートシェーダーでの描き込み先用（UAVも作成する）
+	std::shared_ptr<TextureBuffer>GenerateTextureBuffer(const std::vector<char>& ImgData);
 	/// <summary>
 	/// 画像を読み込んで分割 (LoadDivGraph)
 	/// </summary>

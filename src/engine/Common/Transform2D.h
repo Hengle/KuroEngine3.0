@@ -18,17 +18,16 @@ public:
 private:
 	Transform2D* parent = nullptr;
 
-	Matrix* mat = nullptr;
+	Matrix mat = XMMatrixIdentity();
 	Vec2<float>pos = { 0,0 };
 	Vec2<float>scale = { 1,1 };
-	Matrix rotate = DirectX::XMMatrixIdentity();
+	Matrix rotate = XMMatrixIdentity();
 
 	bool dirty = true;
 
 	void MatReset()
 	{
 		dirty = true;
-		SAFE_DELETE(mat);
 	}
 
 public:
@@ -39,9 +38,7 @@ public:
 			return tmp == this;
 			});
 	}
-	~Transform2D() {
-		SAFE_DELETE(mat);
-	}
+	~Transform2D() {	}
 	void SetParent(Transform2D* Parent) {
 		parent = Parent;
 		MatReset();
@@ -92,6 +89,6 @@ public:
 		rotate = XMMatrixRotationQuaternion(XMQuaternionRotationAxis(vec, Angle));
 		MatReset();
 	}
-	Matrix* GetMat();
+	const Matrix& GetMat();
 	const bool& GetDirty() { return dirty; }
 };

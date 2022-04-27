@@ -245,7 +245,7 @@ std::shared_ptr<VertexBuffer> D3D12App::GenerateVertexBuffer(const size_t& Verte
 		nullptr,
 		IID_PPV_ARGS(&buff));
 
-	if (FAILED(hr))ASSERT_MSG("頂点バッファの生成に失敗\n");
+	KuroFunc::ErrorMessage(FAILED(hr), "D3D12App", "GenerateVertexBuffer", "頂点バッファの生成に失敗\n");
 
 	//名前のセット
 	if (Name != nullptr)buff->SetName(KuroFunc::GetWideStrFromStr(Name).c_str());
@@ -289,7 +289,8 @@ std::shared_ptr<IndexBuffer> D3D12App::GenerateIndexBuffer(const int& IndexNum, 
 	size_t indexSize = 0;
 	if (IndexFormat == DXGI_FORMAT_R32_UINT)indexSize = sizeof(unsigned int);
 	else if (IndexFormat == DXGI_FORMAT_R16_UINT)indexSize = sizeof(unsigned short);
-	else ASSERT_MSG("インデックスバッファを生成しようとしましたが、対応していないフォーマットです\n");
+
+	KuroFunc::ErrorMessage(indexSize == 0, "D3D12App", "GenerateIndexBuffer", "対応していないフォーマットです\n");
 
 	//インデックスバッファサイズ
 	UINT sizeIB = static_cast<UINT>(indexSize * IndexNum);
@@ -304,7 +305,7 @@ std::shared_ptr<IndexBuffer> D3D12App::GenerateIndexBuffer(const int& IndexNum, 
 		nullptr,
 		IID_PPV_ARGS(&buff));
 
-	if (FAILED(hr))ASSERT_MSG("インデックスバッファの生成に失敗\n");
+	KuroFunc::ErrorMessage(FAILED(hr), "D3D12App", "GenerateIndexBuffer", "インデックスバッファの生成に失敗\n");
 
 	//名前のセット
 	if (Name != nullptr)buff->SetName(KuroFunc::GetWideStrFromStr(Name).c_str());
@@ -342,7 +343,7 @@ std::shared_ptr<ConstantBuffer> D3D12App::GenerateConstantBuffer(const size_t& D
 		nullptr,
 		IID_PPV_ARGS(&buff));
 
-	if (FAILED(hr))ASSERT_MSG("定数バッファの生成に失敗\n");
+	KuroFunc::ErrorMessage(FAILED(hr), "D3D12App", "GenerateConstantBuffer", "定数バッファの生成に失敗\n");
 
 	//名前のセット
 	if (Name != nullptr)buff->SetName(KuroFunc::GetWideStrFromStr(Name).c_str());
@@ -378,7 +379,7 @@ std::shared_ptr<StructuredBuffer> D3D12App::GenerateStructuredBuffer(const size_
 		nullptr,
 		IID_PPV_ARGS(&buff));
 
-	if (FAILED(hr))ASSERT_MSG("構造化バッファの生成に失敗\n");
+	KuroFunc::ErrorMessage(FAILED(hr), "D3D12App", "GenerateStructuredBuffer", "構造化バッファの生成に失敗\n");
 
 	//名前のセット
 	if (Name != nullptr)buff->SetName(KuroFunc::GetWideStrFromStr(Name).c_str());
@@ -425,7 +426,7 @@ std::shared_ptr<RWStructuredBuffer> D3D12App::GenerateRWStructuredBuffer(const s
 		nullptr,
 		IID_PPV_ARGS(&buff));
 
-	if (FAILED(hr))ASSERT_MSG("出力用バッファの生成に失敗\n");
+	KuroFunc::ErrorMessage(FAILED(hr), "D3D12App", "GenerateRWStructuredBuffer", "出力用バッファの生成に失敗\n");
 
 	//名前のセット
 	if (Name != nullptr)buff->SetName(KuroFunc::GetWideStrFromStr(Name).c_str());
@@ -499,7 +500,7 @@ std::shared_ptr<TextureBuffer> D3D12App::GenerateTextureBuffer(const Color& Colo
 		nullptr,
 		IID_PPV_ARGS(&buff));
 
-	if (FAILED(hr))ASSERT_MSG("単色塗りつぶしテクスチャバッファの生成に失敗\n");
+	KuroFunc::ErrorMessage(FAILED(hr), "D3D12App", "GenerateTextureBuffer", "単色塗りつぶしテクスチャバッファの生成に失敗\n");
 
 	//バッファに名前セット
 	std::wstring name = L"ColorTexture - ";
@@ -519,7 +520,7 @@ std::shared_ptr<TextureBuffer> D3D12App::GenerateTextureBuffer(const Color& Colo
 	);
 	delete[] texturedata;
 
-	if (FAILED(hr))ASSERT_MSG("単色塗りつぶしテクスチャバッファへのデータ転送に失敗\n");
+	KuroFunc::ErrorMessage(FAILED(hr), "D3D12App", "GenerateTextureBuffer", "単色塗りつぶしテクスチャバッファへのデータ転送に失敗\n");
 
 	//シェーダーリソースビュー作成
 	descHeapCBV_SRV_UAV->CreateSRV(device, buff, Format);
@@ -569,7 +570,7 @@ std::shared_ptr<TextureBuffer> D3D12App::GenerateTextureBuffer(const std::string
 		wtexpath,
 		&metadata,
 		scratchImg);
-	if (FAILED(hr))ASSERT_MSG("画像データ抽出に失敗\n");
+	KuroFunc::ErrorMessage(FAILED(hr), "D3D12App", "GenerateTextureBuffer", "画像データ抽出に失敗\n");
 
 	const Image* img = scratchImg.GetImage(0, 0, 0);	//生データ抽出
 
@@ -594,7 +595,7 @@ std::shared_ptr<TextureBuffer> D3D12App::GenerateTextureBuffer(const std::string
 		barrier,
 		nullptr,
 		IID_PPV_ARGS(&buff));
-	if (FAILED(hr))ASSERT_MSG("ロード画像テクスチャバッファ生成に失敗\n");
+	KuroFunc::ErrorMessage(FAILED(hr), "D3D12App", "GenerateTextureBuffer", "ロード画像テクスチャバッファ生成に失敗\n");
 
 	//名前セット
 	buff->SetName(wtexpath.c_str());
@@ -607,7 +608,7 @@ std::shared_ptr<TextureBuffer> D3D12App::GenerateTextureBuffer(const std::string
 		(UINT)img->rowPitch,	//1ラインサイズ
 		(UINT)img->slicePitch	//１枚サイズ
 	);
-	if (FAILED(hr))ASSERT_MSG("ロード画像テクスチャバッファへのデータ転送に失敗");
+	KuroFunc::ErrorMessage(FAILED(hr), "D3D12App", "GenerateTextureBuffer", "ロード画像テクスチャバッファへのデータ転送に失敗\n");
 
 	//シェーダーリソースビュー作成
 	descHeapCBV_SRV_UAV->CreateSRV(device, buff, metadata.format);
@@ -655,7 +656,7 @@ std::shared_ptr<TextureBuffer> D3D12App::GenerateTextureBuffer(const Vec2<int>& 
 		barrier,
 		nullptr,
 		IID_PPV_ARGS(&buff));
-	if (FAILED(hr))ASSERT_MSG("分割画像用テクスチャバッファ生成に失敗\n");
+	KuroFunc::ErrorMessage(FAILED(hr), "D3D12App", "GenerateTextureBuffer", "分割画像用テクスチャバッファ生成に失敗\n");
 
 	//名前セット
 	if (Name != nullptr)
@@ -675,6 +676,77 @@ std::shared_ptr<TextureBuffer> D3D12App::GenerateTextureBuffer(const Vec2<int>& 
 	std::shared_ptr<TextureBuffer>result;
 	result = std::make_shared<TextureBuffer>(buff, barrier, srvHandles, texDesc);
 	result->SetUAVHandles(uavHandles);
+
+	return result;
+}
+
+std::shared_ptr<TextureBuffer> D3D12App::GenerateTextureBuffer(const std::vector<char>& ImgData)
+{
+	// VRM なので png/jpeg などのファイルを想定し、WIC で読み込む.
+	ComPtr<ID3D12Resource1> staging;
+	HRESULT hr;
+	ScratchImage image;
+	hr = LoadFromWICMemory(ImgData.data(), ImgData.size(), WIC_FLAGS_NONE, nullptr, image);
+	KuroFunc::ErrorMessage(FAILED(hr), "D3D12App", "GenerateTextureBuffer", "WICメモリのロードに失敗\n");
+
+	auto metadata = image.GetMetadata();
+
+	const Image* img = image.GetImage(0, 0, 0);	//生データ抽出
+
+	//テクスチャリソース設定
+	CD3DX12_RESOURCE_DESC texDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+		metadata.format,	//RGBAフォーマット
+		metadata.width,
+		(UINT)metadata.height,
+		(UINT16)metadata.arraySize,
+		(UINT16)metadata.mipLevels);
+
+	//リソースバリア
+	auto barrier = D3D12_RESOURCE_STATE_GENERIC_READ;
+
+	//テクスチャ用リソースバッファの生成
+	ComPtr<ID3D12Resource1>buff;
+	CD3DX12_HEAP_PROPERTIES heapPropForTex(D3D12_CPU_PAGE_PROPERTY_WRITE_BACK, D3D12_MEMORY_POOL_L0);
+	hr = device->CreateCommittedResource(
+		&heapPropForTex,
+		D3D12_HEAP_FLAG_NONE,
+		&texDesc,
+		barrier,
+		nullptr,
+		IID_PPV_ARGS(&buff));
+	KuroFunc::ErrorMessage(FAILED(hr), "D3D12App", "GenerateTextureBuffer", "ロード画像テクスチャバッファ生成に失敗\n");
+
+	//名前セット
+	//buff->SetName(wtexpath.c_str());
+
+	//テクスチャバッファにデータ転送
+	hr = buff->WriteToSubresource(
+		0,
+		nullptr,	//全領域へコピー
+		img->pixels,	//元データアドレス
+		(UINT)img->rowPitch,	//1ラインサイズ
+		(UINT)img->slicePitch	//１枚サイズ
+	);
+	KuroFunc::ErrorMessage(FAILED(hr), "D3D12App", "GenerateTextureBuffer", "ロード画像テクスチャバッファへのデータ転送に失敗\n");
+
+	//シェーダーリソースビュー作成
+	descHeapCBV_SRV_UAV->CreateSRV(device, buff, metadata.format);
+
+	//ビューを作成した位置のディスクリプタハンドルを取得
+	DescHandles handles(descHeapCBV_SRV_UAV->GetCpuHandleTail(), descHeapCBV_SRV_UAV->GetGpuHandleTail());
+
+	//専用のシェーダーリソースクラスにまとめる
+	std::shared_ptr<TextureBuffer>result;
+	result = std::make_shared<TextureBuffer>(buff, barrier, handles, texDesc);
+
+	//テクスチャ用のリソースバリアに変更
+	result->ChangeBarrier(commandList, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+	//作成したカラーテクスチャ情報を記録
+	LoadImgTexture loadImgTexData;
+	//loadImgTexData.path = LoadImgFilePath;
+	loadImgTexData.textures = { result };
+	loadImgTextures.emplace_back(loadImgTexData);
 
 	return result;
 }
@@ -735,7 +807,7 @@ std::shared_ptr<RenderTarget> D3D12App::GenerateRenderTarget(const DXGI_FORMAT& 
 		InitState,
 		&clearValue,
 		IID_PPV_ARGS(&buff));
-	if (FAILED(hr))ASSERT_MSG("レンダーターゲットバッファ生成に失敗\n");
+	KuroFunc::ErrorMessage(FAILED(hr), "D3D12App", "GenerateRenderTarget", "レンダーターゲットバッファ生成に失敗\n");
 
 	//名前セット
 	if (TargetName != nullptr)buff->SetName(TargetName);
@@ -780,7 +852,7 @@ std::shared_ptr<DepthStencil> D3D12App::GenerateDepthStencil(const Vec2<int>& Si
 		D3D12_RESOURCE_STATE_DEPTH_WRITE,
 		&CD3DX12_CLEAR_VALUE(Format, ClearValue, 0),
 		IID_PPV_ARGS(&buff));
-	if (FAILED(hr))ASSERT_MSG("デプスステンシルバッファ生成に失敗\n");
+	KuroFunc::ErrorMessage(FAILED(hr), "D3D12App", "GenerateDepthStencil", "デプスステンシルバッファ生成に失敗\n");
 
 	//DSV作成
 	descHeapDSV->CreateDSV(device, buff);
@@ -819,7 +891,7 @@ void D3D12App::Render(D3D12AppUser* User)
 
 	//命令のクローズ
 	auto hr = commandList->Close();
-	if (FAILED(hr))ASSERT_MSG("コマンドリスト命令のクローズに失敗\n");
+	KuroFunc::ErrorMessage(FAILED(hr), "D3D12App", "Render", "コマンドリスト命令のクローズに失敗\n");
 
 	//コマンドリストの実行
 	ID3D12CommandList* cmdLists[] = { commandList.Get() };	//コマンドリストの配列
@@ -827,18 +899,18 @@ void D3D12App::Render(D3D12AppUser* User)
 
 	//バッファをフリップ（裏表の入れ替え）
 	hr = swapchain->GetSwapchain()->Present(1, 0);
-	if (FAILED(hr))ASSERT_MSG("バックバッファのフリップに失敗\n");
+	KuroFunc::ErrorMessage(FAILED(hr), "D3D12App", "Render", "バックバッファのフリップに失敗\n");
 
 	//バックバッファ番号取得
 	auto frameIdx = swapchain->GetSwapchain()->GetCurrentBackBufferIndex();
 
 	//コマンドアロケータリセット
 	hr = commandAllocators[frameIdx]->Reset();	//キューをクリア
-	if (FAILED(hr))ASSERT_MSG("コマンドアロケータリセットに失敗\n");
+	KuroFunc::ErrorMessage(FAILED(hr), "D3D12App", "Render", "コマンドアロケータリセットに失敗\n");
 
 	//コマンドリスト
 	hr = commandList->Reset(commandAllocators[frameIdx].Get(), nullptr);		//コマンドリストを貯める準備
-	if (FAILED(hr))ASSERT_MSG("コマンドリストのリセットに失敗\n");
+	KuroFunc::ErrorMessage(FAILED(hr), "D3D12App", "Render", "コマンドリストのリセットに失敗\n");
 
 	//コマンドリストの実行完了を待つ
 	swapchain->WaitPreviousFrame(commandQueue, frameIdx);
@@ -964,7 +1036,7 @@ std::shared_ptr<GraphicsPipeline>D3D12App::GenerateGraphicsPipeline(
 				}
 				else
 				{
-					ASSERT_MSG("ルートパラメータが上手くいきませんでした\n");
+					assert(0);	//コンストラクタで避けられてるはずだけど一応
 				}
 			}
 		}
@@ -983,6 +1055,7 @@ std::shared_ptr<GraphicsPipeline>D3D12App::GenerateGraphicsPipeline(
 		ComPtr<ID3DBlob> errorBlob = nullptr;	//エラーオブジェクト
 		// バージョン自動判定のシリアライズ
 		auto hr = D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1_0, &rootSigBlob, &errorBlob);
+
 		if (FAILED(hr))
 		{
 			//errorBlobからエラー内容string型にコピー
@@ -993,16 +1066,15 @@ std::shared_ptr<GraphicsPipeline>D3D12App::GenerateGraphicsPipeline(
 				errorBlob->GetBufferSize(),
 				errstr.begin());
 			errstr += '\n';
-			//エラー内容を出力ウィンドウに表示
-			OutputDebugStringA(errstr.c_str());
-			ASSERT_MSG("ルートシグネチャのバージョン自動判定のシリアライズ失敗\n");
+
+			KuroFunc::ErrorMessage(FAILED(hr), "D3D12App", "GenerateGraphicsPipeline", errstr);
 		}
 
 		// ルートシグネチャの生成
 		hr = device->CreateRootSignature(0, rootSigBlob->GetBufferPointer(), rootSigBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
 
 		//ルートシグネチャ生成に失敗
-		if (FAILED(hr))ASSERT_MSG("ルートシグネチャの生成に失敗\n");
+		KuroFunc::ErrorMessage(FAILED(hr), "D3D12App", "GenerateGraphicsPipeline", "ルートシグネチャの生成に失敗\n");
 	}
 
 	//グラフィックスパイプライン設定にルートシグネチャをセット
@@ -1053,10 +1125,8 @@ std::shared_ptr<GraphicsPipeline>D3D12App::GenerateGraphicsPipeline(
 		for (auto& info : RenderTargetFormat)
 		{
 			int idx = ++desc.NumRenderTargets - 1;
-			if (D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT < desc.NumRenderTargets)
-			{
-				ASSERT_MSG("描画先レンダーターゲットの数が最大を超えています\n");
-			}
+
+			KuroFunc::ErrorMessage(D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT < desc.NumRenderTargets, "D3D12App", "GenerateGraphicsPipeline", "描画先レンダーターゲットの数が最大を超えています\n");
 
 			//描画先レンダーターゲットのフォーマット
 			desc.RTVFormats[idx] = info.format;
@@ -1091,7 +1161,7 @@ std::shared_ptr<GraphicsPipeline>D3D12App::GenerateGraphicsPipeline(
 	//グラフィックスパイプラインの生成
 	ComPtr<ID3D12PipelineState>pipeline;
 	hr = device->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&pipeline));
-	if (FAILED(hr))ASSERT_MSG("グラフィックスパイプライン生成に失敗\n");
+	KuroFunc::ErrorMessage(FAILED(hr), "D3D12App", "GenerateGraphicsPipeline", "グラフィックスパイプライン生成に失敗\n");
 
 	return std::make_shared<GraphicsPipeline>(pipeline, rootSignature, Option.primitiveTopology);
 }
@@ -1150,7 +1220,7 @@ std::shared_ptr<ComputePipeline> D3D12App::GenerateComputePipeline(const ComPtr<
 				}
 				else
 				{
-					ASSERT_MSG("ルートパラメータが上手くいきませんでした\n");
+					assert(0);	//コンストラクタで避けられてるはずだけど一応
 				}
 			}
 		}
@@ -1179,16 +1249,15 @@ std::shared_ptr<ComputePipeline> D3D12App::GenerateComputePipeline(const ComPtr<
 				errorBlob->GetBufferSize(),
 				errstr.begin());
 			errstr += '\n';
-			//エラー内容を出力ウィンドウに表示
-			OutputDebugStringA(errstr.c_str());
-			ASSERT_MSG("ルートシグネチャのバージョン自動判定のシリアライズ失敗\n");
+
+			KuroFunc::ErrorMessage(FAILED(hr), "D3D12App", "GenerateComputePipeline", errstr);
 		}
 
 		// ルートシグネチャの生成
 		hr = device->CreateRootSignature(0, rootSigBlob->GetBufferPointer(), rootSigBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
 
 		//ルートシグネチャ生成に失敗
-		if (FAILED(hr))ASSERT_MSG("ルートシグネチャの生成に失敗\n");
+		KuroFunc::ErrorMessage(FAILED(hr), "D3D12App", "GenerateComputePipeline", "ルートシグネチャの生成に失敗\n");
 	}
 
 	//グラフィックスパイプライン設定にルートシグネチャをセット
@@ -1200,7 +1269,7 @@ std::shared_ptr<ComputePipeline> D3D12App::GenerateComputePipeline(const ComPtr<
 
 	ComPtr<ID3D12PipelineState>pipeline;
 	hr = device->CreateComputePipelineState(&desc, IID_PPV_ARGS(&pipeline));
-	if (FAILED(hr))ASSERT_MSG("コンピュートパイプライン生成に失敗\n");
+	KuroFunc::ErrorMessage(FAILED(hr), "D3D12App", "GenerateComputePipeline", "コンピュートパイプライン生成に失敗\n");
 
 	return std::make_shared<ComputePipeline>(pipeline, rootSignature);
 }

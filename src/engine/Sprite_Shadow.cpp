@@ -85,7 +85,7 @@ Sprite_Shadow::Sprite_Shadow(const std::shared_ptr<TextureBuffer>& Texture, cons
 	SetTexture(Texture, NormalMap, EmissiveMap);
 
 	//行列初期化
-	constData.mat = *transform.GetMat();
+	constData.mat = transform.GetMat();
 
 	//定数バッファ生成
 	constBuff = D3D12App::Instance()->GenerateConstantBuffer(sizeof(constData), 1, &constData, Name);
@@ -148,7 +148,7 @@ void Sprite_Shadow::Draw(LightManager& LigManager)
 
 	if (transform.GetDirty())
 	{
-		constData.mat = *transform.GetMat();
+		constData.mat = transform.GetMat();
 		constBuff->Mapping(&constData);
 	}
 

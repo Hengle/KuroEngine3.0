@@ -1,37 +1,24 @@
 #pragma once
 #include"D3D12Data.h"
-#include<memory>
-#include<vector>
 #include"Vec.h"
 #include"Color.h"
-#include<map>
 
-static class DrawFunc
+static class DrawFunc2D
 {
 	//DrawLine
-	static std::shared_ptr<GraphicsPipeline>LINE_PIPELINE[AlphaBlendModeNum];
 	static int DRAW_LINE_COUNT;	//呼ばれた回数
-	static std::vector<std::shared_ptr<VertexBuffer>>LINE_VERTEX_BUFF;	//DrawLine用
 
 	//DrawBox
-	static std::map<DXGI_FORMAT, std::map<AlphaBlendMode, std::shared_ptr<GraphicsPipeline>>>BOX_PIPELINE;
 	static int DRAW_BOX_COUNT;
-	static std::vector<std::shared_ptr<VertexBuffer>>BOX_VERTEX_BUFF;
 
 	//DrawCircle
-	static std::shared_ptr<GraphicsPipeline>CIRCLE_PIPELINE[AlphaBlendModeNum];
 	static int DRAW_CIRCLE_COUNT;
-	static std::vector<std::shared_ptr<VertexBuffer>>CIRCLE_VERTEX_BUFF;
 
 	//DrawExtendGraph
-	static std::shared_ptr<GraphicsPipeline>EXTEND_GRAPH_PIPELINE[AlphaBlendModeNum];
 	static int DRAW_EXTEND_GRAPH_COUNT;
-	static std::vector<std::shared_ptr<VertexBuffer>>EXTEND_GRAPH_VERTEX_BUFF;
 
 	//DrawRotaGraph
-	static std::shared_ptr<GraphicsPipeline>ROTA_GRAPH_PIPELINE[AlphaBlendModeNum];
 	static int DRAW_ROTA_GRAPH_COUNT;
-	static std::vector<std::shared_ptr<VertexBuffer>>ROTA_GRAPH_VERTEX_BUFF;
 
 public:
 	//呼び出しカウントリセット
@@ -72,7 +59,7 @@ public:
 	/// <param name="Color">色</param>
 	/// <param name="FillFlg">中を塗りつぶすか</param>
 	/// <param name="BlendMode">ブレンドモード</param>
-	static void DrawBox2D(const Vec2<float>& LeftUpPos, const Vec2<float>& RightBottomPos, const Color& BoxColor, const DXGI_FORMAT& Format, const bool& FillFlg = false, const AlphaBlendMode& BlendMode = AlphaBlendMode_None);
+	static void DrawBox2D(const Vec2<float>& LeftUpPos, const Vec2<float>& RightBottomPos, const Color& BoxColor, const bool& FillFlg = false, const AlphaBlendMode& BlendMode = AlphaBlendMode_None);
 
 	/// <summary>
 	/// ２D円の描画

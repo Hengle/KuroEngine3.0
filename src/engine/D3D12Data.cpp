@@ -3,14 +3,14 @@
 void GPUResource::Mapping(const size_t& DataSize, const int& ElementNum, const void* SendData)
 {
 	//送るデータがnullなら何もしない
-	if (SendData == nullptr)ASSERT_MSG("データのマッピングに失敗、引数がnullptrです\n");
+	KuroFunc::ErrorMessage(SendData == nullptr, "GPUResource", "Mapping", "データのマッピングに失敗、引数がnullptrです\n");
 
 	//まだマッピングしていなければマッピング
 	if (!mapped)
 	{
 		//マップ、アンマップのオーバーヘッドを軽減するためにはこのインスタンスが生きている間はUnmapしない
 		auto hr = buff->Map(0, nullptr, (void**)&buffOnCPU);
-		if (FAILED(hr))ASSERT_MSG("データのマッピングに失敗\n");
+		KuroFunc::ErrorMessage(FAILED(hr), "GPUResource", "Mapping", "データのマッピングに失敗\n");
 		mapped = true;
 	}
 
@@ -70,10 +70,10 @@ void DescriptorData::SetComputeDescriptorBuffer(const ComPtr<ID3D12GraphicsComma
 
 void TextureBuffer::CopyTexResource(const ComPtr<ID3D12GraphicsCommandList>& CmdList, TextureBuffer* CopySource)
 {
-	if (texDesc != CopySource->texDesc)
-	{
-		//ASSERT_MSG("シェーダーリソースをコピーしようとしましたが、フォーマットが違います\n");
-	}
+	bool differSize = (texDesc.Width != CopySource->texDesc.Width) || (texDesc.Height != CopySource->texDesc.Height);
+	bool differFormat = texDesc.Format != CopySource->texDesc.Format;
+	KuroFunc::ErrorMessage(differSize || differFormat, "TextureBuffer", "CopyTexResource", "コピー先と元のテクスチャフォーマットが違います\n");
+
 	resource->CopyGPUResource(CmdList, *CopySource->resource);
 }
 

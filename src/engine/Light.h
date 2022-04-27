@@ -49,6 +49,9 @@ namespace Light
 		}constData;
 
 	public:
+		const Color& GetColor() { return constData.color; }
+		const Vec3<float>& GetPos() { return constData.pos; }
+		const float& GetInfluenceRange() { return constData.influenceRange; }
 		void SetColor(const Color& Color)
 		{
 			if (constData.color == Color)return;

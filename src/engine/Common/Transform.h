@@ -20,7 +20,7 @@ public:
 private:
 	Transform* parent = nullptr;
 
-	Matrix* mat = nullptr;
+	Matrix mat = XMMatrixIdentity();
 	Vec3<float>pos = { 0,0,0 };
 	Vec3<float>scale = { 1,1,1 };
 	Matrix rotate = DirectX::XMMatrixIdentity();
@@ -30,7 +30,6 @@ private:
 	void MatReset()
 	{
 		dirty = true;
-		SAFE_DELETE(mat);
 	}
 
 public:
@@ -39,7 +38,6 @@ public:
 		TRANSFORMS.emplace_back(this);
 	}
 	~Transform() {
-		SAFE_DELETE(mat);
 		std::remove_if(TRANSFORMS.begin(), TRANSFORMS.end(), [this](Transform* tmp) {
 			return tmp == this;
 			});
@@ -148,6 +146,6 @@ public:
 		MatReset();
 	}
 
-	Matrix* GetMat(Matrix* BillBoardMat = nullptr);
+	const Matrix& GetMat(const Matrix& BillBoardMat = XMMatrixIdentity());
 	const bool& GetDirty() { return dirty; }
 };

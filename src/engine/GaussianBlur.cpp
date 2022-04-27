@@ -72,10 +72,7 @@ void GaussianBlur::Excute(const ComPtr<ID3D12GraphicsCommandList>& CmdList, cons
 {
     const auto& sDesc = SourceTex->GetDesc();
     const auto& fDesc = finalResult->GetDesc();
-    if (sDesc.Width != fDesc.Width || sDesc.Height != fDesc.Height || sDesc.Format != fDesc.Format)
-    {
-        ASSERT_MSG("ガウシアンブラーを実行しようとしましたが、ソースとなるテクスチャ設定とガウシアンブラー設定が合いません\n");
-    }
+    KuroFunc::ErrorMessage(sDesc.Width != fDesc.Width || sDesc.Height != fDesc.Height || sDesc.Format != fDesc.Format, "GaussianBlur", "Excute", "ソースとなるテクスチャ形式とガウシアンブラー形式が合いません\n");
 
     static const int DIV = 4;
 

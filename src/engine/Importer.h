@@ -1,0 +1,98 @@
+#pragma once
+#include"Singleton.h"
+#include<string>
+#include<fbxsdk.h>
+#include<vector>
+#include<memory>
+#include<map>
+#include<forward_list>
+#include"Animation.h"
+#include"ModelMesh.h"
+#include"Skeleton.h"
+class Model;
+
+#include<GLTFSDK/GLTF.h>
+#include"StreamReader.h"
+
+class Importer : public Singleton<Importer>
+{
+	friend class Singleton<Importer>;
+
+	//モデル専用頂点
+	using Vertex = ModelMesh::Vertex_Model;
+
+	//エラーメッセージ表示
+	void ErrorMessage(const std::string& FuncName, const bool& Fail, const std::string& Comment);
+	//HSMロードで用いるデータの読み取り関数（成功すればtrueを返す)
+	bool LoadData(FILE* Fp, void* Data, const size_t& Size, const int& ElementNum);
+	//HSMセーブで用いるデータの書き込み関数（成功すればtrueを返す)
+	bool SaveData(FILE* Fp, const void* Data, const size_t& Size, const int& ElementNum);
+
+
+#pragma region FBX関連
+	struct FbxBoneAffect	//ボーンと頂点の関連を記録するためのクラス
+	{
+		signed short index;
+		float weight;
+	};
+	//ボーンが頂点に与える影響に関する情報テーブル
+	//< 頂点インデックス、情報(可変長、４個まで)>
+	//５つ以上読み込まれていた場合、頂点読み込み時に無視される
+	using BoneTable = std::map<int, std::forward_list<FbxBoneAffect>>;
+
+	FbxManager* fbxManager = nullptr;
+	FbxIOSettings* ioSettings = nullptr;
+	FbxImporter* fbxImporter = nullptr;
+
+	//FBX関連デバイスの削除処理
+	void FbxDeviceDestroy();
+	//FbxMeshを辿って配列として保存
+	void TraceFbxMesh(FbxNode* Node, std::vector<FbxMesh*>* Mesh);
+	//FbxMatrixをXMMATRIXに変換
+	XMMATRIX FbxMatrixConvert(const FbxMatrix& Mat);	
+	//各種モデル情報読み取り
+	void LoadFbxBone(FbxCluster* Cluster, const int& BoneIndex, BoneTable& BoneTable);
+	void LoadFbxSkin(Skeleton& Skel, FbxMesh* FbxMesh, BoneTable& BoneTable);
+	void SetBoneAffectToVertex(Vertex& Vertex, const int& VertexIdx, BoneTable& BoneTable);	//頂点に対応ボーン情報格納
+	void LoadFbxVertex(ModelMesh& ModelMesh, FbxMesh* FbxMesh, BoneTable& BoneTable);
+	void LoadFbxIndex(ModelMesh& ModelMesh, FbxMesh* FbxMesh);
+	std::string GetFileName(std::string FbxRelativeFileName);
+	void LoadFbxMaterial(const std::string& Dir, ModelMesh& ModelMesh, FbxMesh* FbxMesh);
+	//アニメーションレイヤーの追跡
+	void TraceBoneAnim(Skeleton::ModelAnimation& ModelAnimation, FbxNode* FbxNode, FbxAnimLayer* FbxAnimLayer);
+	void LoadAnimCurve(FbxAnimCurve* FbxAnimCurve, Animation& Animation);
+
+#pragma endregion
+
+#pragma region glTF関連
+	void LoadGLTFPrimitive(ModelMesh& ModelMesh, const Microsoft::glTF::MeshPrimitive& GLTFPrimitive, const Microsoft::glTF::GLTFResourceReader& Reader, const Microsoft::glTF::Document& Doc);
+	void PrintDocumentInfo(const Microsoft::glTF::Document& document);
+	void PrintResourceInfo(const Microsoft::glTF::Document& document, const Microsoft::glTF::GLTFResourceReader& resourceReader);
+#pragma endregion
+
+	//インポートしたモデル
+	std::map<std::string, std::shared_ptr<Model>>models;
+	void RegisterImportModel(const std::string& Dir, const std::string& FileName, const std::shared_ptr<Model>& Model)
+	{
+		models[Dir + FileName] = Model;
+	}
+	std::shared_ptr<Model> CheckAlreadyExsit(const std::string& Dir, const std::string& FileName);
+
+	//HSMはエンジン専用の多種モデルとの仲介役（他のフォーマット読み込みは時間コストが高い？）
+	/*
+	std::shared_ptr<Model>LoadHSMModel(const std::string& Dir, const std::string& FileName, const std::string& HSMPath);
+	void SaveHSMModel(const std::string& FileNameTail, std::shared_ptr<Model>Model, const FILETIME& LastWriteTime);
+	*/
+
+	//HSMが存在する場合をHSMから読み込めるようにするか(HSMのフォーマットが変わったときはフラグをオフにする)
+	const bool canLoadHSM = true;
+
+	Importer();
+public:
+	~Importer() { FbxDeviceDestroy(); }
+
+	//※ ファイル名は拡張子つき
+	std::shared_ptr<Model> LoadFBXModel(const std::string& Dir, const std::string& FileName);
+	std::shared_ptr<Model> LoadGLTFModel(const std::string& Dir, const std::string& FileName);
+};
+

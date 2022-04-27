@@ -2,27 +2,22 @@
 
 std::vector<Transform*> Transform::TRANSFORMS;
 
-Matrix* Transform::GetMat(Matrix* BillBoardMat)
+const Matrix& Transform::GetMat(const Matrix& BillBoardMat)
 {
-	bool parentDirty = (parent != nullptr && parent->dirty);
-	if (mat != nullptr)
+	if (!dirty)
 	{
+		bool parentDirty = (parent != nullptr && parent->dirty);
 		if (!parentDirty)return mat;
-		else SAFE_DELETE(mat);
 	}
 
 	//•Ï‰»‚ ‚èA–¢ŒvZ
-	mat = new Matrix();
-	*mat = XMMatrixScaling(scale.x, scale.y, scale.z) * rotate;
-	if (BillBoardMat != nullptr)
-	{
-		*mat *= *BillBoardMat;
-	}
-	*mat *= XMMatrixTranslation(pos.x, pos.y, pos.z);
+	mat = XMMatrixScaling(scale.x, scale.y, scale.z) * rotate;
+	mat *= BillBoardMat;
+	mat *= XMMatrixTranslation(pos.x, pos.y, pos.z);
 
 	if (parent != nullptr)
 	{
-		*mat *= *(parent->GetMat());
+		mat *= (parent->GetMat());
 	}
 
 	return mat;

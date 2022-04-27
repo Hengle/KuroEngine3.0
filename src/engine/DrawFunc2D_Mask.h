@@ -5,31 +5,13 @@
 #include"Vec.h"
 
 //描画範囲をマスク（範囲外は指定したアルファ値で描画）
-class DrawFunc_Mask
+class DrawFunc2D_Mask
 {
 	//DrawExtendGraph
-	class ExtendGraphVertex
-	{
-	public:
-		Vec2<float>leftUpPos;
-		Vec2<float>rightBottomPos;
-		Vec2<float>maskLeftUpPos;
-		Vec2<float>maskRightBottomPos;
-		Vec2<int> miror;
-		float maskAlpha;	//範囲外の描画アルファ値
-		ExtendGraphVertex(const Vec2<float>& LeftUpPos, const Vec2<float>& RightBottomPos, const Vec2<float>& MaskLeftUpPos, const Vec2<float>& MaskRightBottomPos, const Vec2<bool>& Miror, const float& MaskAlpha)
-			:leftUpPos(LeftUpPos), rightBottomPos(RightBottomPos), maskLeftUpPos(MaskLeftUpPos), maskRightBottomPos(MaskRightBottomPos), miror({ Miror.x ? 1 : 0 ,Miror.y ? 1 : 0 }), maskAlpha(MaskAlpha) {}
-	};
-
-	static std::shared_ptr<GraphicsPipeline>EXTEND_GRAPH_PIPELINE;
 	static int DRAW_EXTEND_GRAPH_COUNT;
-	static std::vector<std::shared_ptr<VertexBuffer>>EXTEND_GRAPH_VERTEX_BUFF;
-	static void CreateExtendGraphFunc();
 
 	//DrawRotaGraph
-	static std::shared_ptr<GraphicsPipeline>ROTA_GRAPH_PIPELINE;
 	static int DRAW_ROTA_GRAPH_COUNT;
-	static std::vector<std::shared_ptr<VertexBuffer>>ROTA_GRAPH_VERTEX_BUFF;
 
 public:
 	//呼び出しカウントリセット

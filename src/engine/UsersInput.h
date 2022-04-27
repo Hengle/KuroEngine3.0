@@ -10,12 +10,6 @@
 #include<wrl.h>
 #include <Xinput.h>
 
-//#include"Collision.h"
-//namespace CollisionPrimitve
-//{
-//	class Ray;
-//}
-
 enum MOUSE_BUTTON { LEFT, RIGHT, CENTER };
 enum XBOX_BUTTON {
 	B = XINPUT_GAMEPAD_B,
@@ -79,10 +73,11 @@ private:
 	Vec2<float> mousePos;
 
 	//XINPUT(コントローラー用)
-	XINPUT_STATE xinputState;
-	XINPUT_STATE oldXinputState;
-	float shakePower = 0.0f;;
-	int shakeTimer = 0;
+	static const int CONTROLLER_NUM = 3;
+	XINPUT_STATE xinputState[CONTROLLER_NUM];
+	XINPUT_STATE oldXinputState[CONTROLLER_NUM];
+	float shakePower[CONTROLLER_NUM] = { 0.0f };
+	int shakeTimer[CONTROLLER_NUM] = { 0 };
 	//デッドゾーンに入っているか(DeadRate : デッドゾーン判定の度合い、1.0fだとデフォルト)
 	bool StickInDeadZone(Vec2<float>& Thumb, const Vec2<float>& DeadRate);
 
@@ -104,36 +99,36 @@ public:
 	void Update(const HWND& Hwnd, const Vec2<float>& WinSize);
 
 	//キーボード
-	bool OnTrigger(int KeyCode);
-	bool Input(int KeyCode);
-	bool OffTrigger(int KeyCode);
+	bool KeyOnTrigger(int KeyCode);
+	bool KeyInput(int KeyCode);
+	bool KeyOffTrigger(int KeyCode);
 
 	//マウス
-	bool OnTrigger(MOUSE_BUTTON Button);
-	bool Input(MOUSE_BUTTON Button);
-	bool OffTrigger(MOUSE_BUTTON Button);
+	bool MouseOnTrigger(MOUSE_BUTTON Button);
+	bool MouseInput(MOUSE_BUTTON Button);
+	bool MouseOffTrigger(MOUSE_BUTTON Button);
 
 	const Vec2<float>& GetMousePos()const { return mousePos; }
 	MouseMove GetMouseMove();
 	//Ray GetMouseRay();
 
 	//XBOXコントローラー
-	bool OnTrigger(XBOX_BUTTON Button);
-	bool OnTrigger(XBOX_STICK StickInput, const float& DeadRange = 0.3f, const Vec2<float>& DeadRate = { 1.0f,1.0f });
-	bool Input(XBOX_BUTTON Button);
-	bool Input(XBOX_STICK StickInput, const float& DeadRange = 0.3f, const Vec2<float>& DeadRate = { 1.0f,1.0f });
-	bool OffTrigger(XBOX_BUTTON Button);
-	bool OffTrigger(XBOX_STICK StickInput, const float& DeadRange = 0.3f, const Vec2<float>& DeadRate = { 1.0f,1.0f });
+	bool ControllerOnTrigger(const int& ControllerIdx, XBOX_BUTTON Button);
+	bool ControllerOnTrigger(const int& ControllerIdx, XBOX_STICK StickInput, const float& DeadRange = 0.3f, const Vec2<float>& DeadRate = { 1.0f,1.0f });
+	bool ControllerInput(const int& ControllerIdx, XBOX_BUTTON Button);
+	bool ControllerInput(const int& ControllerIdx, XBOX_STICK StickInput, const float& DeadRange = 0.3f, const Vec2<float>& DeadRate = { 1.0f,1.0f });
+	bool ControllerOffTrigger(const int& ControllerIdx, XBOX_BUTTON Button);
+	bool ControllerOffTrigger(const int& ControllerIdx, XBOX_STICK StickInput, const float& DeadRange = 0.3f, const Vec2<float>& DeadRate = { 1.0f,1.0f });
 
 	//デッドゾーン判定の度合い(1.0fだとデフォルト採用)
-	Vec2<float>GetLeftStickVec(const Vec2<float>& DeadRate = { 1.0f,1.0f });
-	Vec2<float>GetRightStickVec(const Vec2<float>& DeadRate = { 1.0f,1.0f });
+	Vec2<float>GetLeftStickVec(const int& ControllerIdx, const Vec2<float>& DeadRate = { 1.0f,1.0f });
+	Vec2<float>GetRightStickVec(const int& ControllerIdx, const Vec2<float>& DeadRate = { 1.0f,1.0f });
 	// "Power" must fit between 0.0f and 1.0f.
-	void ShakeController(const float& Power, const int& Span);
+	void ShakeController(const int& ControllerIdx, const float& Power, const int& Span);
 
 	// 生のスティックのレートが欲しかったので臨時で実装しました。開発が終わったら消してください；；
-	Vec2<float>GetLeftStickVecFuna(){return Vec2<float>(xinputState.Gamepad.sThumbLX, -xinputState.Gamepad.sThumbLY);}
-	Vec2<float>GetRightStickVecFuna(){return Vec2<float>(xinputState.Gamepad.sThumbRX, -xinputState.Gamepad.sThumbRY);}
+	Vec2<float>GetLeftStickVecFuna(const int& ControllerIdx){return Vec2<float>(xinputState[ControllerIdx].Gamepad.sThumbLX, -xinputState[ControllerIdx].Gamepad.sThumbLY);}
+	Vec2<float>GetRightStickVecFuna(const int& ControllerIdx){return Vec2<float>(xinputState[ControllerIdx].Gamepad.sThumbRX, -xinputState[ControllerIdx].Gamepad.sThumbRY);}
 
 };
 

@@ -44,5 +44,10 @@ public:
 	Vec2<float>GetExpandWinSize() { return winSize.Float() * winDifferRate; }	//ウィンドウサイズ倍率がかかったサイズ
 	Vec2<float>GetExpandWinCenter() { return GetExpandWinSize() / 2.0f; }
 	const Vec2<float>& GetWinDifferRate() { return winDifferRate; }
+	float GetAspect()
+	{
+		auto size = GetExpandWinSize();
+		return size.x / size.y;
+	}
 };
 

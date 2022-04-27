@@ -4,9 +4,14 @@
 #include"Transform.h"
 #include"Transform2D.h"
 #include"Color.h"
-#include"DrawFunc.h"
-#include"DrawFunc_Shadow.h"
-#include"DrawFunc_FillTex.h"
+
+#include"DrawFunc2D.h"
+#include"DrawFunc2D_Shadow.h"
+#include"DrawFunc2D_FillTex.h"
+#include"DrawFunc2D_Mask.h"
+#include"DrawFunc2D_Color.h"
+
+#include"DrawFunc3D.h"
 
 
 #ifdef _DEBUG
@@ -53,9 +58,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		Transform::DirtyReset();
 		Transform2D::DirtyReset();
 
-		DrawFunc::CountReset();
-		DrawFunc_Shadow::CountReset();
-		DrawFunc_FillTex::CountReset();
+		DrawFunc2D::CountReset();
+		DrawFunc2D_Shadow::CountReset();
+		DrawFunc2D_FillTex::CountReset();
+		DrawFunc2D_Mask::CountReset();
+		DrawFunc2D_Color::CountReset();
+
+		DrawFunc3D::CountReset();
 
 		//メッセージがある？
 		MSG msg{};
