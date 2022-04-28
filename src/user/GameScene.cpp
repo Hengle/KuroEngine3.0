@@ -57,6 +57,8 @@ void GameScene::OnDraw()
 {
 	static auto testModel = Importer::Instance()->LoadFBXModel("resource/user/player/", "player.fbx");
 	static auto testglTF0 = Importer::Instance()->LoadGLTFModel("resource/user/gltf/", "player.glb");
+	static auto monkey = Importer::Instance()->LoadGLTFModel("resource/user/gltf/", "monkey.glb");
+	//static auto monkey = Importer::Instance()->LoadFBXModel("resource/user/", "monkey.fbx");
 	//static auto testglTF1 = Importer::Instance()->LoadGLTFModel("resource/user/gltf/", "player.gltf");
 	//static auto testglTF2 = Importer::Instance()->LoadGLTFModel("resource/user/gltf/", "player_anim_test.gltf");
 
@@ -68,10 +70,11 @@ void GameScene::OnDraw()
 
 	KuroEngine::Instance().Graphics().SetRenderTargets({ D3D12App::Instance()->GetBackBuffRenderTarget() }, dsv);
 
-	static bool DRAW_FLG = false;
+	static bool DRAW_FLG = true;
 	if (DRAW_FLG)
 	{
-		DrawFunc3D::DrawShadingModel(ligMgr, testglTF0, trans, debugCam);
+		//DrawFunc3D::DrawShadingModel(ligMgr, testglTF0, trans, debugCam);
+		DrawFunc3D::DrawShadingModel(ligMgr, monkey, trans, debugCam);
 	}
 	else
 	{

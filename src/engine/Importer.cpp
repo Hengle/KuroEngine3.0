@@ -309,25 +309,25 @@ void Importer::LoadFbxMaterial(const std::string& Dir, ModelMesh& ModelMesh, Fbx
 		FbxSurfaceLambert* lambert = (FbxSurfaceLambert*)material;
 
 		//アンビエント
-		info.ambient.x = (float)lambert->Ambient.Get()[0];
-		info.ambient.y = (float)lambert->Ambient.Get()[1];
-		info.ambient.z = (float)lambert->Ambient.Get()[2];
-		info.ambientFactor = (float)lambert->AmbientFactor.Get();
+		info.lambert.ambient.x = (float)lambert->Ambient.Get()[0];
+		info.lambert.ambient.y = (float)lambert->Ambient.Get()[1];
+		info.lambert.ambient.z = (float)lambert->Ambient.Get()[2];
+		info.lambert.ambientFactor = (float)lambert->AmbientFactor.Get();
 
 		//ディフューズ
-		info.diffuse.x = (float)lambert->Diffuse.Get()[0];
-		info.diffuse.y = (float)lambert->Diffuse.Get()[1];
-		info.diffuse.z = (float)lambert->Diffuse.Get()[2];
-		info.diffuseFactor = (float)lambert->DiffuseFactor.Get();
+		info.lambert.diffuse.x = (float)lambert->Diffuse.Get()[0];
+		info.lambert.diffuse.y = (float)lambert->Diffuse.Get()[1];
+		info.lambert.diffuse.z = (float)lambert->Diffuse.Get()[2];
+		info.lambert.diffuseFactor = (float)lambert->DiffuseFactor.Get();
 
 		//放射
-		info.emissive.x = (float)lambert->Emissive.Get()[0];
-		info.emissive.y = (float)lambert->Emissive.Get()[1];
-		info.emissive.z = (float)lambert->Emissive.Get()[2];
-		info.emissiveFactor = (float)lambert->EmissiveFactor.Get();
+		info.lambert.emissive.x = (float)lambert->Emissive.Get()[0];
+		info.lambert.emissive.y = (float)lambert->Emissive.Get()[1];
+		info.lambert.emissive.z = (float)lambert->Emissive.Get()[2];
+		info.lambert.emissiveFactor = (float)lambert->EmissiveFactor.Get();
 
 		//透過度
-		info.transparent = (float)lambert->TransparencyFactor.Get();
+		info.lambert.transparent = (float)lambert->TransparencyFactor.Get();
 
 		//Phong
 		if (material->GetClassId().Is(FbxSurfacePhong::ClassId))
@@ -335,16 +335,16 @@ void Importer::LoadFbxMaterial(const std::string& Dir, ModelMesh& ModelMesh, Fbx
 			FbxSurfacePhong* phong = (FbxSurfacePhong*)material;
 
 			//スペキュラー
-			info.specular.x = (float)phong->Specular.Get()[0];
-			info.specular.y = (float)phong->Specular.Get()[1];
-			info.specular.z = (float)phong->Specular.Get()[2];
-			info.specularFactor = (float)phong->SpecularFactor.Get();
+			info.phong.specular.x = (float)phong->Specular.Get()[0];
+			info.phong.specular.y = (float)phong->Specular.Get()[1];
+			info.phong.specular.z = (float)phong->Specular.Get()[2];
+			info.phong.specularFactor = (float)phong->SpecularFactor.Get();
 
 			//光沢
-			info.shininess = (float)phong->Shininess.Get();
+			info.phong.shininess = (float)phong->Shininess.Get();
 
 			//反射
-			info.reflection = (float)phong->ReflectionFactor.Get();
+			info.phong.reflection = (float)phong->ReflectionFactor.Get();
 
 			//放射テクスチャ
 			FbxFileTexture* emissiveTex = nullptr;
@@ -360,6 +360,31 @@ void Importer::LoadFbxMaterial(const std::string& Dir, ModelMesh& ModelMesh, Fbx
 				//エミッシブマップ
 				newMaterial->texBuff[EMISSIVE_TEX] = D3D12App::Instance()->GenerateTextureBuffer(path);
 			}
+		}
+
+		//PBR
+		const auto propBaseColor = FbxSurfaceMaterialUtils::GetProperty("baseColor", material);
+		if (propBaseColor.IsValid())
+		{
+			auto baseCol = propBaseColor.Get<FbxDouble3>();
+			newMaterial->constData.pbr.baseColor.x = (float)baseCol.Buffer()[0];
+			newMaterial->constData.pbr.baseColor.y = (float)baseCol.Buffer()[1];
+			newMaterial->constData.pbr.baseColor.z = (float)baseCol.Buffer()[2];
+		}
+		const auto propMetalness = FbxSurfaceMaterialUtils::GetProperty("metalness", material);
+		if (propMetalness.IsValid())
+		{
+			newMaterial->constData.pbr.metalness = propMetalness.Get<float>();
+		}
+		const auto propSpecular = FbxSurfaceMaterialUtils::GetProperty("specular", material);
+		if (propSpecular.IsValid())
+		{
+			newMaterial->constData.pbr.specular = propSpecular.Get<float>();
+		}
+		const auto propRoughness = FbxSurfaceMaterialUtils::GetProperty("specularRoughness", material);
+		if (propRoughness.IsValid())
+		{
+			newMaterial->constData.pbr.roughness = propRoughness.Get<float>();
 		}
 
 		//ディヒューズがテクスチャの情報を持っている
@@ -1163,6 +1188,14 @@ std::shared_ptr<Model> Importer::LoadGLTFModel(const std::string& Dir, const std
 	for (auto& m : doc.materials.Elements())
 	{
 		auto material = std::make_shared<Material>();
+
+		//PBR
+		const auto baseColor = m.metallicRoughness.baseColorFactor;
+		material->constData.pbr.baseColor.x = baseColor.r;
+		material->constData.pbr.baseColor.y = baseColor.g;
+		material->constData.pbr.baseColor.z = baseColor.b;
+		material->constData.pbr.metalness = m.metallicRoughness.metallicFactor;
+		material->constData.pbr.roughness = m.metallicRoughness.roughnessFactor;
 
 		//カラーテクスチャ
 		auto textureId = m.metallicRoughness.baseColorTexture.textureId;
