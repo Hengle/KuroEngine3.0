@@ -1,6 +1,9 @@
 #include "GameScene.h"
 #include"KuroEngine.h"
 #include"Importer.h"
+#include"DrawFunc3D.h"
+#include"Camera.h"
+#include"Model.h"
 
 GameScene::GameScene()
 {
@@ -51,16 +54,21 @@ void GameScene::OnUpdate()
 	debugCam.Move();
 }
 
-#include"DrawFunc3D.h"
-#include"Camera.h"
+
 void GameScene::OnDraw()
 {
 	static auto testModel = Importer::Instance()->LoadFBXModel("resource/user/player/", "player.fbx");
 	static auto testglTF0 = Importer::Instance()->LoadGLTFModel("resource/user/gltf/", "player.glb");
 	static auto monkey = Importer::Instance()->LoadGLTFModel("resource/user/gltf/", "monkey.glb");
-	//static auto monkey = Importer::Instance()->LoadFBXModel("resource/user/", "monkey.fbx");
-	//static auto testglTF1 = Importer::Instance()->LoadGLTFModel("resource/user/gltf/", "player.gltf");
-	//static auto testglTF2 = Importer::Instance()->LoadGLTFModel("resource/user/gltf/", "player_anim_test.gltf");
+	static auto toonTex = D3D12App::Instance()->GenerateTextureBuffer("resource/user/toon.png");
+
+	static bool INIT = false;
+	if (!INIT)
+	{
+		monkey->MeshSmoothing();
+		testModel->MeshSmoothing();
+		INIT = true;
+	}
 
 	static Transform trans;
 	static std::shared_ptr<DepthStencil>dsv = D3D12App::Instance()->GenerateDepthStencil(
@@ -73,19 +81,17 @@ void GameScene::OnDraw()
 	static bool DRAW_FLG = true;
 	if (DRAW_FLG)
 	{
-		//DrawFunc3D::DrawShadingModel(ligMgr, testglTF0, trans, debugCam);
-		DrawFunc3D::DrawShadingModel(ligMgr, monkey, trans, debugCam);
+		//DrawFunc3D::DrawShadingModel(ligMgr, monkey, trans, debugCam);
+		DrawFunc3D::DrawToonModel(toonTex, ligMgr, monkey, trans, debugCam);
 	}
 	else
 	{
-		DrawFunc3D::DrawShadingModel(ligMgr, testModel, trans, debugCam);
+		//DrawFunc3D::DrawShadingModel(ligMgr, testModel, trans, debugCam);
+		DrawFunc3D::DrawToonModel(toonTex, ligMgr, testModel, trans, debugCam);
 	}
-
 	if (UsersInput::Instance()->KeyOnTrigger(DIK_R))DRAW_FLG = !DRAW_FLG;
 
 
-	//DrawFunc3D::DrawNonShadingModel(testModel, trans, debugCam);
-	//DrawFunc3D::DrawNonShadingModel(testglTF0, trans, debugCam);
 	DrawFunc3D::DrawLine(debugCam, { 0,0,0 }, ptLig.GetPos(), Color(1.0f, 0.0f, 0.0f, 1.0f), 0.3f);
 }
 

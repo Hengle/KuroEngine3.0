@@ -33,5 +33,7 @@ public:
 
 	std::shared_ptr<Mesh<Vertex_Model>>mesh;
 	std::shared_ptr<Material> material;
+
+	void Smoothing();
 };
 
