@@ -23,3 +23,8 @@ void Material::CreateBuff()
 	
 	invalid = false;
 }
+
+void Material::Mapping()
+{
+	buff->Mapping(&constData);
+}

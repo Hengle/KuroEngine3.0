@@ -9,6 +9,12 @@ GameScene::GameScene()
 {
 	ligMgr.RegisterDirLight(&dirLig);
 	ligMgr.RegisterPointLight(&ptLig);
+
+	playerModel = Importer::Instance()->LoadFBXModel("resource/user/player/", "player.fbx");
+	playerModel->MeshSmoothing();
+
+	monkey = Importer::Instance()->LoadGLTFModel("resource/user/gltf/", "monkey.glb");
+	monkey->MeshSmoothing();
 }
 
 void GameScene::OnInitialize()
@@ -57,18 +63,8 @@ void GameScene::OnUpdate()
 
 void GameScene::OnDraw()
 {
-	static auto testModel = Importer::Instance()->LoadFBXModel("resource/user/player/", "player.fbx");
 	static auto testglTF0 = Importer::Instance()->LoadGLTFModel("resource/user/gltf/", "player.glb");
-	static auto monkey = Importer::Instance()->LoadGLTFModel("resource/user/gltf/", "monkey.glb");
 	static auto toonTex = D3D12App::Instance()->GenerateTextureBuffer("resource/user/toon.png");
-
-	static bool INIT = false;
-	if (!INIT)
-	{
-		monkey->MeshSmoothing();
-		testModel->MeshSmoothing();
-		INIT = true;
-	}
 
 	static Transform trans;
 	static std::shared_ptr<DepthStencil>dsv = D3D12App::Instance()->GenerateDepthStencil(
@@ -81,13 +77,12 @@ void GameScene::OnDraw()
 	static bool DRAW_FLG = true;
 	if (DRAW_FLG)
 	{
-		//DrawFunc3D::DrawShadingModel(ligMgr, monkey, trans, debugCam);
-		DrawFunc3D::DrawToonModel(toonTex, ligMgr, monkey, trans, debugCam);
+		DrawFunc3D::DrawShadingModel(ligMgr, monkey, trans, debugCam);
 	}
 	else
 	{
-		//DrawFunc3D::DrawShadingModel(ligMgr, testModel, trans, debugCam);
-		DrawFunc3D::DrawToonModel(toonTex, ligMgr, testModel, trans, debugCam);
+		DrawFunc3D::DrawToonModel(toonTex, ligMgr, monkey, trans, debugCam);
+		//DrawFunc3D::DrawShadingModel(ligMgr, playerModel, trans, debugCam);
 	}
 	if (UsersInput::Instance()->KeyOnTrigger(DIK_R))DRAW_FLG = !DRAW_FLG;
 
@@ -97,6 +92,8 @@ void GameScene::OnDraw()
 
 void GameScene::OnImguiDebug()
 {
+	ImguiApp::Instance()->DebugMaterial(monkey->meshes[0].material, REFERENCE);
+	ImguiApp::Instance()->DebugMaterial(monkey->meshes[0].material, REWRITE);
 }
 
 void GameScene::OnFinalize()

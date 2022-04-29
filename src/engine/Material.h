@@ -56,4 +56,5 @@ public:
 
 	Material();
 	void CreateBuff();
+	void Mapping();
 };
