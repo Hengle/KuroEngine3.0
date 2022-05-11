@@ -16,12 +16,16 @@ GameScene::GameScene()
 		 Importer::Instance()->LoadFBXModel("resource/user/gltf/woodball/", "woodcube.fbx"),
 	};
 	models = std::move(loadModels);
+	models[METAL_BALL_FBX]->meshes[0].material->texBuff[NORMAL_TEX] = D3D12App::Instance()->GenerateTextureBuffer("resource/user/gltf/metalball/MetalStainlessSteelBrushedElongated005_NRM_3K_METALNESS.jpg");
 	models[METAL_BALL_FBX]->meshes[0].material->texBuff[METALNESS_TEX] = D3D12App::Instance()->GenerateTextureBuffer("resource/user/gltf/metalball/MetalStainlessSteelBrushedElongated005_METALNESS_3K_METALNESS.jpg");
 	models[METAL_BALL_FBX]->meshes[0].material->texBuff[ROUGHNESS_TEX] = D3D12App::Instance()->GenerateTextureBuffer("resource/user/gltf/metalball/MetalStainlessSteelBrushedElongated005_ROUGHNESS_3K_METALNESS.jpg");
+
+	models[WOOD_CUBE_FBX]->meshes[0].material->texBuff[NORMAL_TEX] = D3D12App::Instance()->GenerateTextureBuffer("resource/user/gltf/woodball/WoodFineDark004_NRM_3K.jpg");
 
 	//dirLig.SetDir(Vec3<Angle>(50, -30, 0));
 	ligMgr.RegisterDirLight(&dirLig);
 	ligMgr.RegisterPointLight(&ptLig);
+	ligMgr.RegisterHemiSphereLight(&hemiLig);
 
 	//trans.SetRotate(Vec3<Angle>(-90, 0, 0));
 	//trans.SetScale(0.3f);
@@ -76,6 +80,10 @@ void GameScene::OnUpdate()
 	if (UsersInput::Instance()->KeyOnTrigger(DIK_2))
 	{
 		ptLig.SetActive();
+	}
+	if (UsersInput::Instance()->KeyOnTrigger(DIK_3))
+	{
+		hemiLig.SetActive();
 	}
 
 	//ƒ‚ƒfƒ‹Ø‚è‘Ö‚¦

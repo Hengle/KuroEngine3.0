@@ -26,6 +26,7 @@ class GameScene : public BaseScene
 	LightManager ligMgr;
 	Light::Direction dirLig;
 	Light::Point ptLig;
+	Light::HemiSphere hemiLig;
 	Transform trans;
 public:
 	GameScene();

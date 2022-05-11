@@ -5,6 +5,8 @@ struct Vertex
 {
     float4 pos : POSITION;
     float3 normal : NORMAL;
+    float3 tangent : TANGENT;
+    float3 binormal : BINORMAL;
     float2 uv : TEXCOORD;
     min16int4 boneNo : BONE_NO;
     float4 weight : WEIGHT;

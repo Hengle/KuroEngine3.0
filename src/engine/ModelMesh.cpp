@@ -39,3 +39,71 @@ void ModelMesh::Smoothing()
 
 	mesh->CreateBuff();
 }
+
+void ModelMesh::BuildTangentAndBiNormal()
+{
+	auto numPolygon = mesh->indices.size() / 3;
+	for (auto polyNo = 0; polyNo < numPolygon; ++polyNo)
+	{
+		const auto no = polyNo * 3;
+		auto vertNo_0 = mesh->indices[no];
+		auto vertNo_1 = mesh->indices[no + 1];
+		auto vertNo_2 = mesh->indices[no + 2];
+
+		auto& vert_0 = mesh->vertices[vertNo_0];
+		auto& vert_1 = mesh->vertices[vertNo_1];
+		auto& vert_2 = mesh->vertices[vertNo_2];
+
+		Vec3<float>cp0[] = {
+			{ vert_0.pos.x, vert_0.uv.x, vert_0.uv.y},
+			{ vert_0.pos.y, vert_0.uv.x, vert_0.uv.y},
+			{ vert_0.pos.z, vert_0.uv.x, vert_0.uv.y}
+		};
+
+		Vec3<float> cp1[] = {
+			{ vert_1.pos.x, vert_1.uv.x, vert_1.uv.y},
+			{ vert_1.pos.y, vert_1.uv.x, vert_1.uv.y},
+			{ vert_1.pos.z, vert_1.uv.x, vert_1.uv.y}
+		};
+
+		Vec3<float> cp2[] = {
+			{ vert_2.pos.x, vert_2.uv.x, vert_2.uv.y},
+			{ vert_2.pos.y, vert_2.uv.x, vert_2.uv.y},
+			{ vert_2.pos.z, vert_2.uv.x, vert_2.uv.y}
+		};
+
+		// 平面パラメータからUV軸座標算出する。
+		Vec3<float> tangent, binormal;
+		for (int i = 0; i < 3; ++i) {
+			auto V1 = cp1[i] - cp0[i];
+			auto V2 = cp2[i] - cp1[i];
+			auto ABC = V1.Cross(V2);
+
+			if (ABC.x == 0.0f) {
+				tangent[i] = 0.0f;
+				binormal[i] = 0.0f;
+			}
+			else {
+				tangent[i] = -ABC.y / ABC.x;
+				binormal[i] = -ABC.z / ABC.x;
+			}
+		}
+
+		tangent.Normalize();
+		binormal.Normalize();
+
+		vert_0.tangent += tangent;
+		vert_1.tangent += tangent;
+		vert_2.tangent += tangent;
+
+		vert_0.binormal += binormal;
+		vert_1.binormal += binormal;
+		vert_2.binormal += binormal;
+	}
+
+	//法線、接ベクトル、従ベクトルを平均化する。
+	for (auto& vert : mesh->vertices) {
+		vert.tangent.Normalize();
+		vert.binormal.Normalize();
+	}
+}

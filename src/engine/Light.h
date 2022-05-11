@@ -19,7 +19,7 @@ namespace Light
 		class ConstData
 		{
 		public:
-			unsigned int active;
+			unsigned int active = 1;
 			Color color;
 			Vec3<float>dir = DEFAULT_DIR;
 		}constData;
@@ -63,7 +63,7 @@ namespace Light
 		class ConstData
 		{
 		public:
-			unsigned int active;
+			unsigned int active = 1;
 			Color color;
 			Vec3<float>pos = { 0.0f,1.0f,0.0f };
 			float influenceRange = 20.0f;
@@ -113,7 +113,7 @@ namespace Light
 		class ConstData
 		{
 		public:
-			unsigned int active;
+			unsigned int active = 1;
 			Color color;
 			Vec3<float>pos = { 0.0f,1.0f,0.0f };
 			float influenceRange = 20.0f;
@@ -174,7 +174,7 @@ namespace Light
 		class ConstData
 		{
 		public:
-			unsigned int active;
+			unsigned int active = 1;
 			Color skyColor = Color(0.4f, 0.6f, 0.8f, 1.0f);
 			Color groundColor = Color(0.15f, 0.7f, 0.95f, 1.0f);
 			Vec3<float>groundNormal = { 0.0f,1.0f,0.0f };

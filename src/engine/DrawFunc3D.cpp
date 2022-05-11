@@ -176,6 +176,7 @@ void DrawFunc3D::DrawADSShadingModel(LightManager& LigManager, const std::weak_p
 			RootParam(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, "天球ライト情報 (構造化バッファ)"),
 			RootParam(D3D12_DESCRIPTOR_RANGE_TYPE_CBV,"トランスフォームバッファ"),
 			RootParam(D3D12_DESCRIPTOR_RANGE_TYPE_SRV,"カラーテクスチャ"),
+			RootParam(D3D12_DESCRIPTOR_RANGE_TYPE_SRV,"ノーマルマップ"),
 			RootParam(D3D12_DESCRIPTOR_RANGE_TYPE_CBV,"マテリアル基本情報バッファ"),
 
 		};
@@ -212,9 +213,10 @@ void DrawFunc3D::DrawADSShadingModel(LightManager& LigManager, const std::weak_p
 				LigManager.GetLigInfo(Light::HEMISPHERE),
 				TRANSFORM_BUFF[DRAW_ADS_SHADING_COUNT],
 				mesh.material->texBuff[COLOR_TEX],
+				mesh.material->texBuff[NORMAL_TEX],
 				mesh.material->buff,
 			},
-			{ CBV,CBV,SRV,SRV,SRV,SRV,CBV,SRV,CBV },
+			{ CBV,CBV,SRV,SRV,SRV,SRV,CBV,SRV,SRV,CBV },
 			Transform.GetPos().z,
 			true);
 	}
@@ -328,6 +330,7 @@ void DrawFunc3D::DrawToonModel(const std::weak_ptr<TextureBuffer> ToonTex, Light
 			RootParam(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, "天球ライト情報 (構造化バッファ)"),
 			RootParam(D3D12_DESCRIPTOR_RANGE_TYPE_CBV,"トランスフォームバッファ"),
 			RootParam(D3D12_DESCRIPTOR_RANGE_TYPE_SRV,"カラーテクスチャ"),
+			RootParam(D3D12_DESCRIPTOR_RANGE_TYPE_SRV,"ノーマルマップ"),
 			RootParam(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, "トゥーンテクスチャ"),
 			RootParam(D3D12_DESCRIPTOR_RANGE_TYPE_CBV,"マテリアル基本情報バッファ"),
 
@@ -365,10 +368,11 @@ void DrawFunc3D::DrawToonModel(const std::weak_ptr<TextureBuffer> ToonTex, Light
 				LigManager.GetLigInfo(Light::HEMISPHERE),
 				TRANSFORM_BUFF[DRAW_TOON_COUNT],
 				mesh.material->texBuff[COLOR_TEX],
+				mesh.material->texBuff[NORMAL_TEX],
 				ToonTex.lock(),
 				mesh.material->buff,
 			},
-			{ CBV,CBV,SRV,SRV,SRV,SRV,CBV,SRV,SRV,CBV },
+			{ CBV,CBV,SRV,SRV,SRV,SRV,CBV,SRV,SRV,SRV,CBV },
 			Transform.GetPos().z,
 			true);
 	}

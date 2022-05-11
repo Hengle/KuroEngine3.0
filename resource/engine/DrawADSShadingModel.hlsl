@@ -24,6 +24,7 @@ cbuffer cbuff2 : register(b2)
 }
 
 Texture2D<float4> tex : register(t4);
+Texture2D<float4> normalMap : register(t5);
 SamplerState smp : register(s0);
 
 cbuffer cbuff3 : register(b3)
@@ -35,10 +36,10 @@ struct VSOutput
 {
     float4 svpos : SV_POSITION;
     float3 worldpos : POSITION;
-    float3 wnormal : NORMAL0; // 法線
-    float3 vnormal : NORMAL1; //ビュー変換後の法線ベクトル
+    float3 normal : NORMAL; // 法線
+    float3 tangent : TANGENT;
+    float3 biNormal : BINORMAL;
     float2 uv : TEXCOORD;
-    float depthInView : CAM_Z; //カメラ空間でのZ
 };
 
 VSOutput VSmain(Vertex input)
@@ -84,14 +85,11 @@ VSOutput VSmain(Vertex input)
     VSOutput output;
     float4 wpos = mul(world, resultPos); //ワールド変換
     output.svpos = mul(cam.view, wpos); //ビュー変換
-    output.depthInView = output.svpos.z; //カメラから見たZ
     output.svpos = mul(cam.proj, output.svpos); //プロジェクション変換
     output.worldpos = wpos;
-    
-    // 法線にワールド行列によるスケーリング・回転を適用
-    float4 wnormal = mul(world, float4(input.normal, 0));
-    output.wnormal = normalize(wnormal.xyz);
-    output.vnormal = normalize(mul(cam.view, wnormal).xyz);
+    output.normal = normalize(mul(world, input.normal));
+    output.tangent = normalize(mul(world, input.tangent));
+    output.biNormal = normalize(mul(world, input.binormal));
     output.uv = input.uv;
     return output;
 }
@@ -105,6 +103,13 @@ struct PSOutput
 
 PSOutput PSmain(VSOutput input) : SV_TARGET
 {
+    
+    float3 normal = input.normal;
+    float3 localNormal = normalMap.Sample(smp, input.uv).xyz;
+    localNormal = (localNormal - 0.5f) * 2.0f;   //タンジェントスペースの法線を0～1の範囲から-1～1の範囲に復元する
+    normal = input.tangent * localNormal.x + input.biNormal * localNormal.y + normal * localNormal.z;
+    float3 vnormal = normalize(mul(cam.view, normal));
+    
      //ライトの影響
     float3 ligEffect = { 0.0f, 0.0f, 0.0f };
     
@@ -115,9 +120,9 @@ PSOutput PSmain(VSOutput input) : SV_TARGET
         
         float3 dir = dirLight[i].direction;
         float3 ligCol = dirLight[i].color.xyz * dirLight[i].color.w;
-        ligEffect += CalcLambertDiffuse(dir, ligCol, input.wnormal) * (material.diffuse * material.diffuseFactor);
-        ligEffect += CalcPhongSpecular(dir, ligCol, input.wnormal, input.worldpos, cam.eyePos) * (material.specular * material.specularFactor);
-        ligEffect += CalcLimLight(dir, ligCol, input.wnormal, input.vnormal);
+        ligEffect += CalcLambertDiffuse(dir, ligCol, normal) * (material.diffuse * material.diffuseFactor);
+        ligEffect += CalcPhongSpecular(dir, ligCol, normal, input.worldpos, cam.eyePos) * (material.specular * material.specularFactor);
+        ligEffect += CalcLimLight(dir, ligCol, normal, vnormal);
     }
     //ポイントライト
     for (int i = 0; i < ligNum.ptLigNum; ++i)
@@ -129,8 +134,8 @@ PSOutput PSmain(VSOutput input) : SV_TARGET
         float3 ligCol = pointLight[i].color.xyz * pointLight[i].color.w;
         
         //減衰なし状態
-        float3 diffPoint = CalcLambertDiffuse(dir, ligCol, input.wnormal);
-        float3 specPoint = CalcPhongSpecular(dir, ligCol, input.wnormal, input.worldpos, cam.eyePos);
+        float3 diffPoint = CalcLambertDiffuse(dir, ligCol, normal);
+        float3 specPoint = CalcPhongSpecular(dir, ligCol, normal, input.worldpos, cam.eyePos);
         
         //距離による減衰
         float3 distance = length(input.worldpos - pointLight[i].pos);
@@ -146,7 +151,7 @@ PSOutput PSmain(VSOutput input) : SV_TARGET
         
         ligEffect += diffPoint * (material.diffuse * material.diffuseFactor);
         ligEffect += specPoint * (material.specular * material.specularFactor);
-        ligEffect += CalcLimLight(dir, ligCol, input.wnormal, input.vnormal);
+        ligEffect += CalcLimLight(dir, ligCol, normal, vnormal);
     }
     //スポットライト
     for (int i = 0; i < ligNum.spotLigNum; ++i)
@@ -158,8 +163,8 @@ PSOutput PSmain(VSOutput input) : SV_TARGET
         float3 ligCol = spotLight[i].color.xyz * spotLight[i].color.w;
         
         //減衰なし状態
-        float3 diffSpotLight = CalcLambertDiffuse(ligDir, ligCol, input.wnormal);
-        float3 specSpotLight = CalcPhongSpecular(ligDir, ligCol, input.wnormal, input.worldpos, cam.eyePos);
+        float3 diffSpotLight = CalcLambertDiffuse(ligDir, ligCol, normal);
+        float3 specSpotLight = CalcPhongSpecular(ligDir, ligCol, normal, input.worldpos, cam.eyePos);
         
         //スポットライトとの距離を計算
         float3 distance = length(input.worldpos - spotLight[i].pos);
@@ -173,7 +178,7 @@ PSOutput PSmain(VSOutput input) : SV_TARGET
         diffSpotLight *= affect;
         specSpotLight *= affect;
     
-        float3 spotlim = CalcLimLight(ligDir, ligCol, input.wnormal, input.vnormal) * affect;
+        float3 spotlim = CalcLimLight(ligDir, ligCol, normal, vnormal) * affect;
         
         float3 dir = normalize(spotLight[i].target - spotLight[i].pos);
         float angle = dot(ligDir, dir);
@@ -192,7 +197,7 @@ PSOutput PSmain(VSOutput input) : SV_TARGET
     {
         if (!hemiSphereLight[i].active)continue;
         
-        float t = dot(input.wnormal.xyz, hemiSphereLight[i].groundNormal);
+        float t = dot(normal.xyz, hemiSphereLight[i].groundNormal);
         t = (t + 1.0f) / 2.0f;
         float3 hemiLight = lerp(hemiSphereLight[i].groundColor, hemiSphereLight[i].skyColor, t);
         ligEffect += hemiLight;

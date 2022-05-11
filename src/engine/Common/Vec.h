@@ -256,6 +256,14 @@ struct Vec3
 		y = fmodf(y, rhs.y);
 		z = fmodf(z, rhs.z);
 	};
+	T& operator[](const int& Idx)
+	{
+		if (Idx == 0)return this->x;
+		if (Idx == 1)return this->y;
+		if (Idx == 2)return this->z;
+		assert(0);
+	}
+
 #pragma endregion
 };
 

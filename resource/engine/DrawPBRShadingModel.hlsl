@@ -26,7 +26,7 @@ cbuffer cbuff2 : register(b2)
 
 Texture2D<float4> baseTex : register(t4);
 Texture2D<float4> metalnessTex : register(t5);
-Texture2D<float4> normalTex : register(t6);
+Texture2D<float4> normalMap : register(t6);
 Texture2D<float4> roughnessTex : register(t7);
 SamplerState smp : register(s0);
 
@@ -43,10 +43,10 @@ struct VSOutput
 {
     float4 svpos : SV_POSITION;
     float3 worldpos : POSITION;
-    float3 wnormal : NORMAL0; // 法線
-    float3 vnormal : NORMAL1; //ビュー変換後の法線ベクトル
+    float3 normal : NORMAL; // 法線
+    float3 tangent : TANGENT;
+    float3 biNormal : BINORMAL;
     float2 uv : TEXCOORD;
-    float depthInView : CAM_Z; //カメラ空間でのZ
 };
 
 VSOutput VSmain(Vertex input)
@@ -92,14 +92,11 @@ VSOutput VSmain(Vertex input)
     VSOutput output;
     float4 wpos = mul(world, resultPos); //ワールド変換
     output.svpos = mul(cam.view, wpos); //ビュー変換
-    output.depthInView = output.svpos.z; //カメラから見たZ
     output.svpos = mul(cam.proj, output.svpos); //プロジェクション変換
     output.worldpos = wpos;
-    
-    // 法線にワールド行列によるスケーリング・回転を適用
-    float4 wnormal = mul(world, float4(input.normal, 0));
-    output.wnormal = normalize(wnormal.xyz);
-    output.vnormal = normalize(mul(cam.view, wnormal).xyz);
+    output.normal = normalize(mul(world, input.normal));
+    output.tangent = normalize(mul(world, input.tangent));
+    output.biNormal = normalize(mul(world, input.binormal));
     output.uv = input.uv;
     return output;
 }
@@ -195,6 +192,11 @@ float3 BRDF(float3 LigDirection, float3 LigColor, float3 WorldNormal, float3 Wor
 
 PSOutput PSmain(VSOutput input) : SV_TARGET
 {
+    float3 normal = input.normal;
+    float3 localNormal = normalMap.Sample(smp, input.uv).xyz;
+    localNormal = (localNormal - 0.5f) * 2.0f; //タンジェントスペースの法線を0～1の範囲から-1～1の範囲に復元する
+    normal = input.tangent * localNormal.x + input.biNormal * localNormal.y + normal * localNormal.z;
+    
     s_baseColor = material.baseColor + baseTex.Sample(smp, input.uv).rgb;
     s_metalness = material.metalness + metalnessTex.Sample(smp, input.uv).r;
     s_roughness = material.roughness + roughnessTex.Sample(smp, input.uv).r;
@@ -209,7 +211,7 @@ PSOutput PSmain(VSOutput input) : SV_TARGET
         
         float3 dir = dirLight[i].direction;
         float3 ligCol = dirLight[i].color.xyz * dirLight[i].color.w;
-        ligEffect += BRDF(dir, ligCol, input.wnormal, input.worldpos, cam.eyePos);
+        ligEffect += BRDF(dir, ligCol, normal, input.worldpos, cam.eyePos);
     }
     //ポイントライト
     for (int i = 0; i < ligNum.ptLigNum; ++i)
@@ -230,7 +232,7 @@ PSOutput PSmain(VSOutput input) : SV_TARGET
 		//影響を指数関数的にする
         affect = pow(affect, 3.0f);
         
-        ligEffect += BRDF(dir, ligCol, input.wnormal, input.worldpos, cam.eyePos) * affect;
+        ligEffect += BRDF(dir, ligCol, normal, input.worldpos, cam.eyePos) * affect;
     }
     //スポットライト
     for (int i = 0; i < ligNum.spotLigNum; ++i)
@@ -259,17 +261,17 @@ PSOutput PSmain(VSOutput input) : SV_TARGET
             affect = 0.0f;
         affect = pow(affect, 0.5f);
         
-        ligEffect += BRDF(dir, ligCol, input.wnormal, input.worldpos, cam.eyePos) * affect;
+        ligEffect += BRDF(dir, ligCol, normal, input.worldpos, cam.eyePos) * affect;
     }
     //天球
     for (int i = 0; i < ligNum.hemiSphereNum; ++i)
     {
         if (!hemiSphereLight[i].active)continue;
         
-        float t = dot(input.wnormal.xyz, hemiSphereLight[i].groundNormal);
+        float t = dot(normal.xyz, hemiSphereLight[i].groundNormal);
         t = (t + 1.0f) / 2.0f;
         float3 hemiLight = lerp(hemiSphereLight[i].groundColor, hemiSphereLight[i].skyColor, t);
-        ligEffect += hemiLight;
+        ligEffect *= hemiLight;
     }
     
     float4 result = float4(ligEffect, 1.0f - material.transparent);

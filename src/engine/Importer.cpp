@@ -1108,6 +1108,7 @@ std::shared_ptr<Model> Importer::LoadFBXModel(const std::string& Dir, const std:
 		//ƒ}ƒeƒŠƒAƒ‹
 		LoadFbxMaterial(Dir, mesh, fbxMesh);
 
+		mesh.BuildTangentAndBiNormal();
 		mesh.material->CreateBuff();
 		mesh.mesh->CreateBuff();
 
@@ -1298,6 +1299,7 @@ std::shared_ptr<Model> Importer::LoadGLTFModel(const std::string& Dir, const std
 			int materialIdx = int(doc.materials.GetIndex(meshPrimitive.materialId));
 			mesh.material = loadMaterials[materialIdx];
 
+			mesh.BuildTangentAndBiNormal();
 			mesh.mesh->CreateBuff();
 			result->meshes.emplace_back(mesh);
 		}

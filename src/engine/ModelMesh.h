@@ -17,6 +17,8 @@ public:
 			{
 				InputLayoutParam("POSITION",DXGI_FORMAT_R32G32B32_FLOAT),
 				InputLayoutParam("NORMAL",DXGI_FORMAT_R32G32B32_FLOAT),
+				InputLayoutParam("TANGENT",DXGI_FORMAT_R32G32B32_FLOAT),	//接ベクトル
+				InputLayoutParam("BINORMAL",DXGI_FORMAT_R32G32B32_FLOAT),	//従ベクトル
 				InputLayoutParam("TEXCOORD",DXGI_FORMAT_R32G32_FLOAT),
 				InputLayoutParam("BONE_NO",DXGI_FORMAT_R16G16B16A16_SINT),
 				InputLayoutParam("WEIGHT",DXGI_FORMAT_R32G32B32A32_FLOAT),
@@ -26,6 +28,8 @@ public:
 
 		Vec3<float>pos;
 		Vec3<float>normal;
+		Vec3<float>tangent;
+		Vec3<float>binormal;
 		Vec2<float>uv;
 		Vec4<signed short>boneIdx = { -1,-1,-1,-1 };
 		Vec4<float>boneWeight = { 0,0,0,0 };
@@ -35,5 +39,6 @@ public:
 	std::shared_ptr<Material> material;
 
 	void Smoothing();
+	void BuildTangentAndBiNormal();
 };
 
