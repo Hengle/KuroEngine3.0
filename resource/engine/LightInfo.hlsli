@@ -42,31 +42,40 @@ struct LightInfo
 
 float3 CalcLambertDiffuse(float3 DirDirection, float3 DirColor, float3 Normal)
 {
+    float t = saturate(dot(normalize(Normal), -DirDirection));
+	//ägéUîΩéÀåı
+    return DirColor * t;
+}
+
+//ê≥ãKâªLambert
+float3 CalcNormalizeLambertDiffuse(float3 DirDirection, float3 DirColor, float3 Normal)
+{
     float t = dot(Normal, DirDirection);
     t *= -1.0f;
     if (t < 0.0f)
         t = 0.0f;
 	
 	//ägéUîΩéÀåı
-    return DirColor * t;
+    return DirColor * t / 3.1415926f;
 }
 
 float3 CalcPhongSpecular(float3 DirDirection, float3 DirColor, float3 WorldNormal, float3 WorldPos, float3 EyePos)
 {
 	//îΩéÀÉxÉNÉgÉã
-    float3 refVec = reflect(DirDirection, WorldNormal);
+    //float3 refVec = reflect(DirDirection, WorldNormal);
 
 	//ãæñ îΩéÀÇÃã≠Ç≥
-    float3 toEye = EyePos - WorldPos;
-    toEye = normalize(toEye);
-    float t = dot(refVec, toEye);
+    float3 toEye = normalize(EyePos - WorldPos);
+    //float t = dot(refVec, toEye);
+    float t = saturate(dot(normalize(WorldNormal), normalize(-DirDirection + toEye)));
     
-    if (t < 0.0f)
-    {
-        t = 0.0f;
-    }
+    //if (t < 0.0f)
+    //{
+        //t = 0.0f;
+    //}
 
 	//ãæñ îΩéÀÇÃã≠Ç≥ÇçiÇÈ
+    //t = pow(t, 5.0f);
     t = pow(t, 5.0f);
 
 	//ãæñ îΩéÀåı

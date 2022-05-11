@@ -2,6 +2,8 @@
 #include"Vec.h"
 #include"Color.h"
 #include"Angle.h"
+#include"KuroFunc.h"
+#include"KuroMath.h"
 
 class LightManager;
 
@@ -11,13 +13,14 @@ namespace Light
 	class Direction
 	{
 		friend class LightManager;
+		static const Vec3<float>DEFAULT_DIR;
 		bool dirty = true;	//LightManager‚©‚ç‚ÌŠÄŽ‹—p
 
 		class ConstData
 		{
 		public:
 			Color color;
-			Vec3<float>dir = { 0.0f,-1.0f,0.0f };
+			Vec3<float>dir = DEFAULT_DIR;
 		}constData;
 
 	public:
@@ -32,6 +35,11 @@ namespace Light
 			if (constData.dir == Direction)return;
 			constData.dir = Direction;
 			dirty = true;
+		}
+		void SetDir(const Vec3<Angle>& Rotate, const Vec3<float>& Dir = DEFAULT_DIR)
+		{
+			const auto dir = KuroFunc::TransformVec3(Dir, KuroMath::RotateMat(Rotate));
+			SetDir(dir);
 		}
 	};
 

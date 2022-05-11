@@ -207,12 +207,12 @@ void Importer::LoadFbxVertex(ModelMesh& ModelMesh, FbxMesh* FbxMesh, BoneTable& 
 		int index = indices[i];
 
 		//頂点座標リストから座標を取得
-		vertex.pos.x = vertices[index][0];
+		vertex.pos.x = -vertices[index][0];
 		vertex.pos.y = vertices[index][1];
 		vertex.pos.z = vertices[index][2];
 
 		//法線リストから法線を取得
-		vertex.normal.x = (float)normals[i][0];
+		vertex.normal.x = -(float)normals[i][0];
 		vertex.normal.y = (float)normals[i][1];
 		vertex.normal.z = (float)normals[i][2];
 
@@ -235,8 +235,8 @@ void Importer::LoadFbxIndex(ModelMesh& ModelMesh, FbxMesh* FbxMesh)
 	{
 		//左手系（右周り）
 		ModelMesh.mesh->indices.emplace_back(i * 3 + 1);
-		ModelMesh.mesh->indices.emplace_back(i * 3 + 2);
 		ModelMesh.mesh->indices.emplace_back(i * 3);
+		ModelMesh.mesh->indices.emplace_back(i * 3 + 2);
 	}
 }
 
@@ -410,8 +410,12 @@ void Importer::LoadFbxMaterial(const std::string& Dir, ModelMesh& ModelMesh, Fbx
 
 		if (tex != nullptr)
 		{
-			auto path = Dir + GetFileName(tex->GetRelativeFileName());
-			newMaterial->texBuff[COLOR_TEX] = D3D12App::Instance()->GenerateTextureBuffer(path);
+			const auto fileName = GetFileName(tex->GetRelativeFileName());
+			if (!fileName.empty())
+			{
+				auto path = Dir + fileName;
+				newMaterial->texBuff[COLOR_TEX] = D3D12App::Instance()->GenerateTextureBuffer(path);
+			}
 		}
 
 		ModelMesh.material = newMaterial;
@@ -950,7 +954,7 @@ std::shared_ptr<Model> Importer::LoadFBXModel(const std::string& Dir, const std:
 
 	//拡張子取得
 	const auto ext = "." + KuroFunc::GetExtension(FileName);
-	ErrorMessage(FUNC_NAME, ext != ".fbx", "拡張子が合いません\n");
+	ErrorMessage(FUNC_NAME, ext != ".fbx" && ext != ".FBX", "拡張子が合いません\n");
 
 	//モデル名取得(ファイル名から拡張子を除いたもの)
 	auto modelName = FileName;

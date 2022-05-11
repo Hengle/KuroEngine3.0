@@ -90,7 +90,7 @@ VSOutput VSmain(Vertex input)
     
     // 法線にワールド行列によるスケーリング・回転を適用
     float4 wnormal = mul(world, float4(input.normal, 0));
-    output.wnormal = normalize(wnormal.xyz);
+    output.wnormal = wnormal.xyz;
     output.vnormal = mul(cam.view, wnormal).xyz;
     output.uv = input.uv;
     return output;
@@ -113,7 +113,7 @@ PSOutput PSmain(VSOutput input) : SV_TARGET
     {
         float3 dir = dirLight[i].direction;
         float3 ligCol = dirLight[i].color.xyz * dirLight[i].color.w;
-        ligEffect += CalcLambertDiffuse(dir, ligCol, input.wnormal) * (material.diffuse * material.diffuseFactor);
+        ligEffect += CalcNormalizeLambertDiffuse(dir, ligCol, input.wnormal) * (material.diffuse * material.diffuseFactor);
         ligEffect += CalcPhongSpecular(dir, ligCol, input.wnormal, input.worldpos, cam.eyePos) * (material.specular * material.specularFactor);
         ligEffect += CalcLimLight(dir, ligCol, input.wnormal, input.vnormal);
     }
@@ -125,7 +125,7 @@ PSOutput PSmain(VSOutput input) : SV_TARGET
         float3 ligCol = pointLight[i].color.xyz * pointLight[i].color.w;
         
         //減衰なし状態
-        float3 diffPoint = CalcLambertDiffuse(dir, ligCol, input.wnormal);
+        float3 diffPoint = CalcNormalizeLambertDiffuse(dir, ligCol, input.wnormal);
         float3 specPoint = CalcPhongSpecular(dir, ligCol, input.wnormal, input.worldpos, cam.eyePos);
         
         //距離による減衰
@@ -152,7 +152,7 @@ PSOutput PSmain(VSOutput input) : SV_TARGET
         float3 ligCol = spotLight[i].color.xyz * spotLight[i].color.w;
         
         //減衰なし状態
-        float3 diffSpotLight = CalcLambertDiffuse(ligDir, ligCol, input.wnormal);
+        float3 diffSpotLight = CalcNormalizeLambertDiffuse(ligDir, ligCol, input.wnormal);
         float3 specSpotLight = CalcPhongSpecular(ligDir, ligCol, input.wnormal, input.worldpos, cam.eyePos);
         
         //スポットライトとの距離を計算
@@ -191,7 +191,8 @@ PSOutput PSmain(VSOutput input) : SV_TARGET
     }
     
     float4 result = tex.Sample(smp, input.uv);
-    result.xyz = ((material.ambient * material.ambientFactor) + ligEffect) * result.xyz;
+    result.xyz += material.ambient * material.ambientFactor;
+    result.xyz *= ligEffect;
     result.w *= (1.0f - material.transparent);
     
     PSOutput output;

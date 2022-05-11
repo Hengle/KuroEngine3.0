@@ -15,7 +15,7 @@ public:
 	std::string name = "DefaultMaterial";
 	struct Lambert
 	{
-		Vec3<float> ambient = { 0,0,0 };	//環境光(全方向から当たる光)
+		Vec3<float> ambient = { 0.2,0.2,0.2 };	//環境光(全方向から当たる光)
 		float ambientFactor = 1.0f;			//強度(weight)
 		Vec3<float> diffuse = { 1.0f,1.0f,1.0f };	//拡散反射光(モデルが本来持っている色味)
 		float diffuseFactor = 1.0f;
@@ -25,7 +25,7 @@ public:
 	};
 	struct Phong
 	{
-		Vec3<float> specular = { 0,0,0 };	//スペキュラ(モデルの艶)
+		Vec3<float> specular = { 1,1,1 };	//スペキュラ(モデルの艶)
 		float specularFactor = 1.0f;
 		float shininess = 0.0f;					//光沢
 		float reflection = 0.0f;					//反射(値が大きいと鏡のようになる)

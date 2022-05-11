@@ -192,7 +192,8 @@ PSOutput PSmain(VSOutput input) : SV_TARGET
     }
     
     float4 result = tex.Sample(smp, input.uv);
-    result.xyz *= ligEffect;
+    result.xyz = ((material.ambient * material.ambientFactor) + ligEffect) * result.xyz;
+    result.w *= (1.0f - material.transparent);
     
     float bright = dot(result.xyz, float3(0.2125f, 0.7154f, 0.0721f));
     result.xyz = toonTex.Sample(smp, float2(bright, 0.0f));
