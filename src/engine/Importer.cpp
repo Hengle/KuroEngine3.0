@@ -363,58 +363,112 @@ void Importer::LoadFbxMaterial(const std::string& Dir, ModelMesh& ModelMesh, Fbx
 		}
 
 		//PBR
-		const auto propBaseColor = FbxSurfaceMaterialUtils::GetProperty("baseColor", material);
-		if (propBaseColor.IsValid())
+		//ベースカラー
 		{
-			auto baseCol = propBaseColor.Get<FbxDouble3>();
-			newMaterial->constData.pbr.baseColor.x = (float)baseCol.Buffer()[0];
-			newMaterial->constData.pbr.baseColor.y = (float)baseCol.Buffer()[1];
-			newMaterial->constData.pbr.baseColor.z = (float)baseCol.Buffer()[2];
+			const auto propBaseColor = FbxSurfaceMaterialUtils::GetProperty("baseColor", material);
+			if (propBaseColor.IsValid())
+			{
+				const FbxFileTexture* baseColorTex = propBaseColor.GetSrcObject<FbxFileTexture>();
+
+				if (baseColorTex)
+				{
+					auto path = Dir + GetFileName(baseColorTex->GetRelativeFileName());
+					newMaterial->texBuff[BASE_COLOR_TEX] = D3D12App::Instance()->GenerateTextureBuffer(path);
+				}
+				else
+				{
+					auto baseCol = propBaseColor.Get<FbxDouble3>();
+					newMaterial->constData.pbr.baseColor.x = (float)baseCol.Buffer()[0];
+					newMaterial->constData.pbr.baseColor.y = (float)baseCol.Buffer()[1];
+					newMaterial->constData.pbr.baseColor.z = (float)baseCol.Buffer()[2];
+				}
+			}
 		}
-		const auto propMetalness = FbxSurfaceMaterialUtils::GetProperty("metalness", material);
-		if (propMetalness.IsValid())
+		//金属度
 		{
-			newMaterial->constData.pbr.metalness = propMetalness.Get<float>();
+			const auto propMetalness = FbxSurfaceMaterialUtils::GetProperty("metalness", material);
+			if (propMetalness.IsValid())
+			{
+				const FbxFileTexture* metalnessTex = propMetalness.GetSrcObject<FbxFileTexture>();
+
+				if (metalnessTex)
+				{
+					auto path = Dir + GetFileName(metalnessTex->GetRelativeFileName());
+					newMaterial->texBuff[METALNESS_TEX] = D3D12App::Instance()->GenerateTextureBuffer(path);
+				}
+				else 
+				{
+					newMaterial->constData.pbr.metalness = propMetalness.Get<float>();
+				}
+			}
 		}
+		//PBRスペキュラー
 		const auto propSpecular = FbxSurfaceMaterialUtils::GetProperty("specular", material);
 		if (propSpecular.IsValid())
 		{
 			newMaterial->constData.pbr.specular = propSpecular.Get<float>();
 		}
-		const auto propRoughness = FbxSurfaceMaterialUtils::GetProperty("specularRoughness", material);
-		if (propRoughness.IsValid())
+		//粗さ
 		{
-			newMaterial->constData.pbr.roughness = propRoughness.Get<float>();
-		}
-
-		//ディヒューズがテクスチャの情報を持っている
-		auto prop = material->FindProperty(FbxSurfaceMaterial::sDiffuse);
-		//FbxFileTextureを取得
-		FbxFileTexture* tex = nullptr;
-		int textureNum = prop.GetSrcObjectCount<FbxFileTexture>();
-		if (0 < textureNum)
-		{
-			//propからFbxFileTextureを取得
-			tex = prop.GetSrcObject<FbxFileTexture>(0);
-		}
-		else
-		{
-			//失敗したらマルチテクスチャの可能性を考えてFbxLayeredTextureを指定
-			//FbxLayeredTextureからFbxFileTextureを取得
-			int layerNum = prop.GetSrcObjectCount<FbxLayeredTexture>();
-			if (0 < layerNum)
+			const auto propRoughness = FbxSurfaceMaterialUtils::GetProperty("specularRoughness", material);
+			if (propRoughness.IsValid())
 			{
-				tex = prop.GetSrcObject<FbxFileTexture>(0);
+				const FbxFileTexture* roughnessTex = propRoughness.GetSrcObject<FbxFileTexture>();
+
+				if (roughnessTex)
+				{
+					auto path = Dir + GetFileName(roughnessTex->GetRelativeFileName());
+					newMaterial->texBuff[ROUGHNESS_TEX] = D3D12App::Instance()->GenerateTextureBuffer(path);
+				}
+				else
+				{
+					newMaterial->constData.pbr.roughness = propRoughness.Get<float>();
+				}
 			}
 		}
 
-		if (tex != nullptr)
+		//ディヒューズがテクスチャの情報を持っている
 		{
-			const auto fileName = GetFileName(tex->GetRelativeFileName());
-			if (!fileName.empty())
+			auto prop = material->FindProperty(FbxSurfaceMaterial::sDiffuse);
+			//FbxFileTextureを取得
+			FbxFileTexture* tex = nullptr;
+			int textureNum = prop.GetSrcObjectCount<FbxFileTexture>();
+			if (0 < textureNum)
 			{
-				auto path = Dir + fileName;
-				newMaterial->texBuff[COLOR_TEX] = D3D12App::Instance()->GenerateTextureBuffer(path);
+				//propからFbxFileTextureを取得
+				tex = prop.GetSrcObject<FbxFileTexture>(0);
+			}
+			else
+			{
+				//失敗したらマルチテクスチャの可能性を考えてFbxLayeredTextureを指定
+				//FbxLayeredTextureからFbxFileTextureを取得
+				int layerNum = prop.GetSrcObjectCount<FbxLayeredTexture>();
+				if (0 < layerNum)
+				{
+					tex = prop.GetSrcObject<FbxFileTexture>(0);
+				}
+			}
+
+			if (tex != nullptr)
+			{
+				const auto fileName = GetFileName(tex->GetRelativeFileName());
+				if (!fileName.empty())
+				{
+					auto path = Dir + fileName;
+					newMaterial->texBuff[COLOR_TEX] = D3D12App::Instance()->GenerateTextureBuffer(path);
+				}
+			}
+		}
+
+		//法線マップ
+		const FbxProperty propNormalCamera = FbxSurfaceMaterialUtils::GetProperty("normalCamera", material);
+		if (propNormalCamera.IsValid())
+		{
+			const FbxFileTexture* normalTex = propNormalCamera.GetSrcObject<FbxFileTexture>();
+			if (normalTex)
+			{
+				auto path = Dir + GetFileName(normalTex->GetRelativeFileName());
+				newMaterial->texBuff[NORMAL_TEX] = D3D12App::Instance()->GenerateTextureBuffer(path);
 			}
 		}
 

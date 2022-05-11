@@ -248,7 +248,10 @@ void DrawFunc3D::DrawPBRShadingModel(LightManager& LigManager, const std::weak_p
 			RootParam(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, "スポットライト情報 (構造化バッファ)"),
 			RootParam(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, "天球ライト情報 (構造化バッファ)"),
 			RootParam(D3D12_DESCRIPTOR_RANGE_TYPE_CBV,"トランスフォームバッファ"),
-			RootParam(D3D12_DESCRIPTOR_RANGE_TYPE_SRV,"カラーテクスチャ"),
+			RootParam(D3D12_DESCRIPTOR_RANGE_TYPE_SRV,"ベースカラーテクスチャ"),
+			RootParam(D3D12_DESCRIPTOR_RANGE_TYPE_SRV,"メタルネステクスチャ"),
+			RootParam(D3D12_DESCRIPTOR_RANGE_TYPE_SRV,"ノーマルマップ"),
+			RootParam(D3D12_DESCRIPTOR_RANGE_TYPE_SRV,"粗さ"),
 			RootParam(D3D12_DESCRIPTOR_RANGE_TYPE_CBV,"マテリアル基本情報バッファ"),
 
 		};
@@ -285,9 +288,12 @@ void DrawFunc3D::DrawPBRShadingModel(LightManager& LigManager, const std::weak_p
 				LigManager.GetLigInfo(Light::HEMISPHERE),
 				TRANSFORM_BUFF[DRAW_PBR_SHADING_COUNT],
 				mesh.material->texBuff[COLOR_TEX],
+				mesh.material->texBuff[METALNESS_TEX],
+				mesh.material->texBuff[NORMAL_TEX],
+				mesh.material->texBuff[ROUGHNESS_TEX],
 				mesh.material->buff,
 			},
-			{ CBV,CBV,SRV,SRV,SRV,SRV,CBV,SRV,CBV },
+			{ CBV,CBV,SRV,SRV,SRV,SRV,CBV,SRV,SRV,SRV,SRV,CBV },
 			Transform.GetPos().z,
 			true);
 	}

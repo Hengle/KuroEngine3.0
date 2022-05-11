@@ -24,8 +24,15 @@ cbuffer cbuff2 : register(b2)
     matrix world;
 }
 
-Texture2D<float4> tex : register(t4);
+Texture2D<float4> baseTex : register(t4);
+Texture2D<float4> metalnessTex : register(t5);
+Texture2D<float4> normalTex : register(t6);
+Texture2D<float4> roughnessTex : register(t7);
 SamplerState smp : register(s0);
+
+static float3 s_baseColor;
+static float s_metalness;
+static float s_roughness;
 
 cbuffer cbuff3 : register(b3)
 {
@@ -130,17 +137,17 @@ float3 SchlickFresnel3(float3 f0, float3 f90, float cosine)
 
 float3 DisneyFresnel(float LdotH)
 {
-    float luminance = 0.3f * material.baseColor.r + 0.6 * material.baseColor.g + 0.1f * material.baseColor.b;
-    float3 tintColor = material.baseColor / luminance;
+    float luminance = 0.3f * s_baseColor.r + 0.6 * s_baseColor.g + 0.1f * s_baseColor.b;
+    float3 tintColor = s_baseColor / luminance;
     float3 nonMetalColor = material.specular_pbr * 0.08f * tintColor;
-    float3 specularColor = lerp(nonMetalColor, material.baseColor, material.metalness);
+    float3 specularColor = lerp(nonMetalColor, s_baseColor, s_metalness);
     return SchlickFresnel3(specularColor, float3(1, 1, 1), LdotH);
 }
 
 //UE4‚ÌSmithƒ‚ƒfƒ‹
 float GeometricSmith(float cosine)
 {
-    float k = (material.roughness + 1.0f);
+    float k = (s_roughness + 1.0f);
     k = k * k / 8.0f;
     return cosine / (cosine * (1.0f - k) + k);
 }
@@ -148,7 +155,7 @@ float GeometricSmith(float cosine)
 //‹¾–Ê”½ŽË‚ÌŒvŽZ
 float3 CookTorranceSpecular(float NdotL,float NdotV,float NdotH,float LdotH)
 {
-    float Ds = DistributionGGX(material.roughness * material.roughness, NdotH);
+    float Ds = DistributionGGX(s_roughness * s_roughness, NdotH);
     float3 Fs = DisneyFresnel(LdotH);
     float Gs = GeometricSmith(NdotL) * GeometricSmith(NdotV);
     float m = 4.0f * NdotL * NdotV;
@@ -173,14 +180,14 @@ float3 BRDF(float3 LigDirection, float3 LigColor, float3 WorldNormal, float3 Wor
     
     float diffuseReflectance = 1.0f / PI;
     
-    float energyBias = 0.5f * material.roughness;
-    float Fd90 = energyBias + 2.0f * LdotH * LdotH * material.roughness;
+    float energyBias = 0.5f * s_roughness;
+    float Fd90 = energyBias + 2.0f * LdotH * LdotH * s_roughness;
     float FL = SchlickFresnel(1.0f, Fd90, NdotL);
     float FV = SchlickFresnel(1.0f, Fd90, NdotV);
-    float energyFactor = lerp(1.0f, 1.0f / 1.51f, material.roughness);
+    float energyFactor = lerp(1.0f, 1.0f / 1.51f, s_roughness);
     float Fd = FL * FV * energyFactor;
     
-    float3 diffuseColor = diffuseReflectance * Fd * material.baseColor * (1 - material.metalness);
+    float3 diffuseColor = diffuseReflectance * Fd * s_baseColor * (1 - s_metalness);
     float3 specularColor = CookTorranceSpecular(NdotL, NdotV, NdotH, LdotH);
     
     return diffuseColor + specularColor;
@@ -188,6 +195,10 @@ float3 BRDF(float3 LigDirection, float3 LigColor, float3 WorldNormal, float3 Wor
 
 PSOutput PSmain(VSOutput input) : SV_TARGET
 {
+    s_baseColor = material.baseColor + baseTex.Sample(smp, input.uv).rgb;
+    s_metalness = material.metalness + metalnessTex.Sample(smp, input.uv).r;
+    s_roughness = material.roughness + roughnessTex.Sample(smp, input.uv).r;
+    
      //ƒ‰ƒCƒg‚Ì‰e‹¿
     float3 ligEffect = { 0.0f, 0.0f, 0.0f };
     
@@ -261,9 +272,7 @@ PSOutput PSmain(VSOutput input) : SV_TARGET
         ligEffect += hemiLight;
     }
     
-    float4 result = tex.Sample(smp, input.uv);
-    result.xyz = ligEffect * result.xyz;
-    result.w *= (1.0f - material.transparent);
+    float4 result = float4(ligEffect, 1.0f - material.transparent);
     
     PSOutput output;
     output.color = result;

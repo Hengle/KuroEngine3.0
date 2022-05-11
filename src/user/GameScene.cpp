@@ -7,16 +7,21 @@
 
 GameScene::GameScene()
 {
+	std::array<std::shared_ptr<Model>, MODEL_NUM>loadModels =
+	{
+		Importer::Instance()->LoadGLTFModel("resource/user/gltf/", "monkey.glb"),
+		 Importer::Instance()->LoadFBXModel("resource/user/", "Dragon.FBX"),
+		 Importer::Instance()->LoadGLTFModel("resource/user/gltf/", "player.glb"),
+		 Importer::Instance()->LoadFBXModel("resource/user/gltf/metalball/", "metalball.fbx"),
+		 Importer::Instance()->LoadFBXModel("resource/user/gltf/woodball/", "woodcube.fbx"),
+	};
+	models = std::move(loadModels);
+	models[METAL_BALL_FBX]->meshes[0].material->texBuff[METALNESS_TEX] = D3D12App::Instance()->GenerateTextureBuffer("resource/user/gltf/metalball/MetalStainlessSteelBrushedElongated005_METALNESS_3K_METALNESS.jpg");
+	models[METAL_BALL_FBX]->meshes[0].material->texBuff[ROUGHNESS_TEX] = D3D12App::Instance()->GenerateTextureBuffer("resource/user/gltf/metalball/MetalStainlessSteelBrushedElongated005_ROUGHNESS_3K_METALNESS.jpg");
+
 	//dirLig.SetDir(Vec3<Angle>(50, -30, 0));
 	ligMgr.RegisterDirLight(&dirLig);
 	ligMgr.RegisterPointLight(&ptLig);
-
-	playerModel = Importer::Instance()->LoadFBXModel("resource/user/player/", "player.fbx");
-	playerModel->MeshSmoothing();
-
-	drawTest = Importer::Instance()->LoadGLTFModel("resource/user/gltf/", "monkey.glb");
-	//drawTest = Importer::Instance()->LoadFBXModel("resource/user/", "Dragon.FBX");
-	drawTest->MeshSmoothing();
 
 	//trans.SetRotate(Vec3<Angle>(-90, 0, 0));
 	//trans.SetScale(0.3f);
@@ -34,6 +39,7 @@ void GameScene::OnUpdate()
 		debugCam.Init({ 0,1,-3 }, { 0,1,0 });
 	}
 
+	//ポイントライト位置
 	static const float UINT = 0.1f;
 	auto ptLigPos = ptLig.GetPos();
 	if (UsersInput::Instance()->KeyInput(DIK_W))
@@ -62,6 +68,7 @@ void GameScene::OnUpdate()
 	}
 	ptLig.SetPos(ptLigPos);
 
+	//ライトのON/OFF
 	if (UsersInput::Instance()->KeyOnTrigger(DIK_1))
 	{
 		dirLig.SetActive();
@@ -71,13 +78,22 @@ void GameScene::OnUpdate()
 		ptLig.SetActive();
 	}
 
+	//モデル切り替え
+	if (0 < nowModel && UsersInput::Instance()->KeyOnTrigger(DIK_LEFT))
+	{
+		nowModel = (MODEL)(nowModel - 1);
+	}
+	if (nowModel < MODEL_NUM - 1 && UsersInput::Instance()->KeyOnTrigger(DIK_RIGHT))
+	{
+		nowModel = (MODEL)(nowModel + 1);
+	}
+
 	debugCam.Move();
 }
 
 
 void GameScene::OnDraw()
 {
-	static auto testglTF0 = Importer::Instance()->LoadGLTFModel("resource/user/gltf/", "player.glb");
 	static auto toonTex = D3D12App::Instance()->GenerateTextureBuffer("resource/user/toon.png");
 
 	static std::shared_ptr<DepthStencil>dsv = D3D12App::Instance()->GenerateDepthStencil(
@@ -91,15 +107,15 @@ void GameScene::OnDraw()
 	static DRAW_MODE mode = ADS;
 	if (mode == PBR)
 	{
-		DrawFunc3D::DrawPBRShadingModel(ligMgr, drawTest, trans, debugCam);
+		DrawFunc3D::DrawPBRShadingModel(ligMgr, models[nowModel], trans, debugCam);
 	}
 	else if(mode == TOON)
 	{
-		DrawFunc3D::DrawToonModel(toonTex, ligMgr, drawTest, trans, debugCam);
+		DrawFunc3D::DrawToonModel(toonTex, ligMgr, models[nowModel], trans, debugCam);
 	}
 	else
 	{
-		DrawFunc3D::DrawADSShadingModel(ligMgr, drawTest, trans, debugCam);
+		DrawFunc3D::DrawADSShadingModel(ligMgr, models[nowModel], trans, debugCam);
 	}
 
 	if (UsersInput::Instance()->KeyOnTrigger(DIK_R))
@@ -113,8 +129,8 @@ void GameScene::OnDraw()
 
 void GameScene::OnImguiDebug()
 {
-	ImguiApp::Instance()->DebugMaterial(drawTest->meshes[0].material, REFERENCE);
-	ImguiApp::Instance()->DebugMaterial(drawTest->meshes[0].material, REWRITE);
+	ImguiApp::Instance()->DebugMaterial(models[nowModel]->meshes[0].material, REFERENCE);
+	ImguiApp::Instance()->DebugMaterial(models[nowModel]->meshes[0].material, REWRITE);
 }
 
 void GameScene::OnFinalize()
