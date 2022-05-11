@@ -99,7 +99,7 @@ void GameScene::OnDraw()
 	}
 	else
 	{
-		DrawFunc3D::DrawShadingModel(ligMgr, drawTest, trans, debugCam);
+		DrawFunc3D::DrawADSShadingModel(ligMgr, drawTest, trans, debugCam);
 	}
 
 	if (UsersInput::Instance()->KeyOnTrigger(DIK_R))

@@ -7,8 +7,8 @@
 int DrawFunc3D::DRAW_LINE_COUNT = 0;
 //DrawNonShadingModel
 int DrawFunc3D::DRAW_NON_SHADING_COUNT = 0;
-//DrawShadingModel
-int DrawFunc3D::DRAW_SHADING_COUNT = 0;
+//DrawADSShadingModel
+int DrawFunc3D::DRAW_ADS_SHADING_COUNT = 0;
 //DrawPBRShadingModel
 int DrawFunc3D::DRAW_PBR_SHADING_COUNT = 0;
 //DrawToonModel
@@ -149,7 +149,7 @@ void DrawFunc3D::DrawNonShadingModel(const std::weak_ptr<Model> Model, Transform
 	DRAW_NON_SHADING_COUNT++;
 }
 
-void DrawFunc3D::DrawShadingModel(LightManager& LigManager, const std::weak_ptr<Model> Model, Transform& Transform, Camera& Cam, const AlphaBlendMode& BlendMode)
+void DrawFunc3D::DrawADSShadingModel(LightManager& LigManager, const std::weak_ptr<Model> Model, Transform& Transform, Camera& Cam, const AlphaBlendMode& BlendMode)
 {
 	static std::shared_ptr<GraphicsPipeline>PIPELINE[AlphaBlendModeNum];
 	static std::vector<std::shared_ptr<ConstantBuffer>>TRANSFORM_BUFF;
@@ -162,8 +162,8 @@ void DrawFunc3D::DrawShadingModel(LightManager& LigManager, const std::weak_ptr<
 
 		//シェーダー情報
 		static Shaders SHADERS;
-		SHADERS.vs = D3D12App::Instance()->CompileShader("resource/engine/DrawShadingModel.hlsl", "VSmain", "vs_5_0");
-		SHADERS.ps = D3D12App::Instance()->CompileShader("resource/engine/DrawShadingModel.hlsl", "PSmain", "ps_5_0");
+		SHADERS.vs = D3D12App::Instance()->CompileShader("resource/engine/DrawADSShadingModel.hlsl", "VSmain", "vs_5_0");
+		SHADERS.ps = D3D12App::Instance()->CompileShader("resource/engine/DrawADSShadingModel.hlsl", "PSmain", "ps_5_0");
 
 		//ルートパラメータ
 		static std::vector<RootParam>ROOT_PARAMETER =
@@ -188,12 +188,12 @@ void DrawFunc3D::DrawShadingModel(LightManager& LigManager, const std::weak_ptr<
 
 	KuroEngine::Instance().Graphics().SetPipeline(PIPELINE[BlendMode]);
 
-	if (TRANSFORM_BUFF.size() < (DRAW_SHADING_COUNT + 1))
+	if (TRANSFORM_BUFF.size() < (DRAW_ADS_SHADING_COUNT + 1))
 	{
-		TRANSFORM_BUFF.emplace_back(D3D12App::Instance()->GenerateConstantBuffer(sizeof(Matrix), 1, nullptr, ("DrawShadingModel_Transform -" + std::to_string(DRAW_SHADING_COUNT)).c_str()));
+		TRANSFORM_BUFF.emplace_back(D3D12App::Instance()->GenerateConstantBuffer(sizeof(Matrix), 1, nullptr, ("DrawADSShadingModel_Transform -" + std::to_string(DRAW_ADS_SHADING_COUNT)).c_str()));
 	}
 
-	TRANSFORM_BUFF[DRAW_SHADING_COUNT]->Mapping(&Transform.GetMat());
+	TRANSFORM_BUFF[DRAW_ADS_SHADING_COUNT]->Mapping(&Transform.GetMat());
 
 	auto model = Model.lock();
 
@@ -210,7 +210,7 @@ void DrawFunc3D::DrawShadingModel(LightManager& LigManager, const std::weak_ptr<
 				LigManager.GetLigInfo(Light::POINT),
 				LigManager.GetLigInfo(Light::SPOT),
 				LigManager.GetLigInfo(Light::HEMISPHERE),
-				TRANSFORM_BUFF[DRAW_SHADING_COUNT],
+				TRANSFORM_BUFF[DRAW_ADS_SHADING_COUNT],
 				mesh.material->texBuff[COLOR_TEX],
 				mesh.material->buff,
 			},
@@ -219,7 +219,7 @@ void DrawFunc3D::DrawShadingModel(LightManager& LigManager, const std::weak_ptr<
 			true);
 	}
 
-	DRAW_SHADING_COUNT++;
+	DRAW_ADS_SHADING_COUNT++;
 }
 
 void DrawFunc3D::DrawPBRShadingModel(LightManager& LigManager, const std::weak_ptr<Model> Model, Transform& Transform, Camera& Cam, const AlphaBlendMode& BlendMode)

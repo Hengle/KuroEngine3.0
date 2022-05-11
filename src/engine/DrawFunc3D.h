@@ -15,8 +15,8 @@ static class DrawFunc3D
 	static int DRAW_LINE_COUNT;
 	//DrawNonShadingModel
 	static int DRAW_NON_SHADING_COUNT;
-	//DrawShadingModel
-	static int DRAW_SHADING_COUNT;
+	//DrawADSShadingModel
+	static int DRAW_ADS_SHADING_COUNT;
 	//DrawPBRShadingModel
 	static int DRAW_PBR_SHADING_COUNT;
 	//DrawToonModel
@@ -28,7 +28,7 @@ public:
 	{
 		DRAW_LINE_COUNT = 0;
 		DRAW_NON_SHADING_COUNT = 0;
-		DRAW_SHADING_COUNT = 0;
+		DRAW_ADS_SHADING_COUNT = 0;
 		DRAW_PBR_SHADING_COUNT = 0;
 		DRAW_TOON_COUNT = 0;
 	}
@@ -38,7 +38,7 @@ public:
 	//í èÌï`âÊ
 	static void DrawNonShadingModel(const std::weak_ptr<Model>Model, Transform& Transform, Camera& Camera, const AlphaBlendMode& BlendMode = AlphaBlendMode_Trans);
 	//âeÇ¬Ç´ï`âÊ
-	static void DrawShadingModel(LightManager& LigManager, const std::weak_ptr<Model>Model, Transform& Transform, Camera& Cam, const AlphaBlendMode& BlendMode = AlphaBlendMode_Trans);
+	static void DrawADSShadingModel(LightManager& LigManager, const std::weak_ptr<Model>Model, Transform& Transform, Camera& Cam, const AlphaBlendMode& BlendMode = AlphaBlendMode_Trans);
 	//âeÇ¬Ç´ï`âÊ(PBR)
 	static void DrawPBRShadingModel(LightManager& LigManager, const std::weak_ptr<Model>Model, Transform& Transform, Camera& Cam, const AlphaBlendMode& BlendMode = AlphaBlendMode_Trans);
 	//ÉgÉDÅ[ÉìÉVÉFÅ[ÉfÉBÉìÉO
