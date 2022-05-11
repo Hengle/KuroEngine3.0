@@ -230,10 +230,6 @@ PSOutput PSmain(VSOutput input) : SV_TARGET
         ligDir = normalize(ligDir);
         float3 ligCol = spotLight[i].color.xyz * spotLight[i].color.w;
         
-        //減衰なし状態
-        float3 diffSpotLight = CalcNormalizeLambertDiffuse(ligDir, ligCol, input.wnormal);
-        float3 specSpotLight = CalcPhongSpecular(ligDir, ligCol, input.wnormal, input.worldpos, cam.eyePos);
-        
         //スポットライトとの距離を計算
         float3 distance = length(input.worldpos - spotLight[i].pos);
        	//影響率は距離に比例して小さくなっていく
@@ -243,11 +239,7 @@ PSOutput PSmain(VSOutput input) : SV_TARGET
             affect = 0.0f;
     //影響を指数関数的にする
         affect = pow(affect, 3.0f);
-        diffSpotLight *= affect;
-        specSpotLight *= affect;
     
-        float3 spotlim = CalcLimLight(ligDir, ligCol, input.wnormal, input.vnormal) * affect;
-        
         float3 dir = normalize(spotLight[i].target - spotLight[i].pos);
         float angle = dot(ligDir, dir);
         angle = abs(acos(angle));
@@ -256,9 +248,7 @@ PSOutput PSmain(VSOutput input) : SV_TARGET
             affect = 0.0f;
         affect = pow(affect, 0.5f);
         
-        ligEffect += diffSpotLight * affect * (material.diffuse * material.diffuseFactor);
-        ligEffect += specSpotLight * affect * (material.specular * material.specularFactor);
-        ligEffect += spotlim * affect;
+        ligEffect += BRDF(dir, ligCol, input.wnormal, input.worldpos, cam.eyePos) * affect;
     }
     //天球
     for (int i = 0; i < ligNum.hemiSphereNum; ++i)

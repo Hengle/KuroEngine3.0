@@ -14,12 +14,12 @@ GameScene::GameScene()
 	playerModel = Importer::Instance()->LoadFBXModel("resource/user/player/", "player.fbx");
 	playerModel->MeshSmoothing();
 
-	//drawTest = Importer::Instance()->LoadGLTFModel("resource/user/gltf/", "drawTest.glb");
-	drawTest = Importer::Instance()->LoadFBXModel("resource/user/", "Dragon.FBX");
-	//drawTest->MeshSmoothing();
+	drawTest = Importer::Instance()->LoadGLTFModel("resource/user/gltf/", "monkey.glb");
+	//drawTest = Importer::Instance()->LoadFBXModel("resource/user/", "Dragon.FBX");
+	drawTest->MeshSmoothing();
 
-	trans.SetRotate(Vec3<Angle>(-90, 0, 0));
-	trans.SetScale(0.3f);
+	//trans.SetRotate(Vec3<Angle>(-90, 0, 0));
+	//trans.SetScale(0.3f);
 }
 
 void GameScene::OnInitialize()
@@ -87,19 +87,28 @@ void GameScene::OnDraw()
 
 	KuroEngine::Instance().Graphics().SetRenderTargets({ D3D12App::Instance()->GetBackBuffRenderTarget() }, dsv);
 
-	static bool DRAW_FLG = true;
-	if (DRAW_FLG)
+	static const enum DRAW_MODE { ADS, TOON, PBR, MODE_NUM };
+	static DRAW_MODE mode = ADS;
+	if (mode == PBR)
 	{
 		DrawFunc3D::DrawPBRShadingModel(ligMgr, drawTest, trans, debugCam);
 	}
-	else
+	else if(mode == TOON)
 	{
 		DrawFunc3D::DrawToonModel(toonTex, ligMgr, drawTest, trans, debugCam);
 	}
-	if (UsersInput::Instance()->KeyOnTrigger(DIK_R))DRAW_FLG = !DRAW_FLG;
+	else
+	{
+		DrawFunc3D::DrawShadingModel(ligMgr, drawTest, trans, debugCam);
+	}
 
+	if (UsersInput::Instance()->KeyOnTrigger(DIK_R))
+	{
+		mode = (DRAW_MODE)(mode + 1);
+		if (mode == MODE_NUM)mode = ADS;
+	}
 
-	DrawFunc3D::DrawLine(debugCam, { 0,0,0 }, ptLig.GetPos(), Color(1.0f, 0.0f, 0.0f, 1.0f), 0.3f);
+	//DrawFunc3D::DrawLine(debugCam, { 0,0,0 }, ptLig.GetPos(), Color(1.0f, 0.0f, 0.0f, 1.0f), 0.3f);
 }
 
 void GameScene::OnImguiDebug()

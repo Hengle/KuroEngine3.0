@@ -112,6 +112,8 @@ PSOutput PSmain(VSOutput input) : SV_TARGET
     //ディレクションライト
     for (int i = 0; i < ligNum.dirLigNum; ++i)
     {
+        if (!dirLight[i].active)continue;
+        
         float3 dir = dirLight[i].direction;
         float3 ligCol = dirLight[i].color.xyz * dirLight[i].color.w;
         ligEffect += CalcLambertDiffuse(dir, ligCol, input.wnormal) * (material.diffuse * material.diffuseFactor);
@@ -121,6 +123,8 @@ PSOutput PSmain(VSOutput input) : SV_TARGET
     //ポイントライト
     for (int i = 0; i < ligNum.ptLigNum; ++i)
     {
+        if (!pointLight[i].active)continue;
+        
         float3 dir = input.worldpos - pointLight[i].pos;
         dir = normalize(dir);
         float3 ligCol = pointLight[i].color.xyz * pointLight[i].color.w;
@@ -148,6 +152,8 @@ PSOutput PSmain(VSOutput input) : SV_TARGET
     //スポットライト
     for (int i = 0; i < ligNum.spotLigNum; ++i)
     {
+        if (!spotLight[i].active)continue;
+        
         float3 ligDir = input.worldpos - spotLight[i].pos;
         ligDir = normalize(ligDir);
         float3 ligCol = spotLight[i].color.xyz * spotLight[i].color.w;
@@ -185,6 +191,8 @@ PSOutput PSmain(VSOutput input) : SV_TARGET
     //天球
     for (int i = 0; i < ligNum.hemiSphereNum; ++i)
     {
+        if (!hemiSphereLight[i].active)continue;
+        
         float t = dot(input.wnormal.xyz, hemiSphereLight[i].groundNormal);
         t = (t + 1.0f) / 2.0f;
         float3 hemiLight = lerp(hemiSphereLight[i].groundColor, hemiSphereLight[i].skyColor, t);
