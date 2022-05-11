@@ -7,9 +7,9 @@
 
 GameScene::GameScene()
 {
-	dirLig.SetDir(Vec3<Angle>(50, -30, 0));
+	//dirLig.SetDir(Vec3<Angle>(50, -30, 0));
 	ligMgr.RegisterDirLight(&dirLig);
-	//ligMgr.RegisterPointLight(&ptLig);
+	ligMgr.RegisterPointLight(&ptLig);
 
 	playerModel = Importer::Instance()->LoadFBXModel("resource/user/player/", "player.fbx");
 	playerModel->MeshSmoothing();
@@ -17,10 +17,9 @@ GameScene::GameScene()
 	//drawTest = Importer::Instance()->LoadGLTFModel("resource/user/gltf/", "drawTest.glb");
 	drawTest = Importer::Instance()->LoadFBXModel("resource/user/", "Dragon.FBX");
 	//drawTest->MeshSmoothing();
-	drawTest = playerModel;
 
 	trans.SetRotate(Vec3<Angle>(-90, 0, 0));
-	//trans.SetScale(0.3f);
+	trans.SetScale(0.3f);
 }
 
 void GameScene::OnInitialize()
@@ -63,6 +62,15 @@ void GameScene::OnUpdate()
 	}
 	ptLig.SetPos(ptLigPos);
 
+	if (UsersInput::Instance()->KeyOnTrigger(DIK_1))
+	{
+		dirLig.SetActive();
+	}
+	if (UsersInput::Instance()->KeyOnTrigger(DIK_2))
+	{
+		ptLig.SetActive();
+	}
+
 	debugCam.Move();
 }
 
@@ -82,7 +90,7 @@ void GameScene::OnDraw()
 	static bool DRAW_FLG = true;
 	if (DRAW_FLG)
 	{
-		DrawFunc3D::DrawShadingModel(ligMgr, drawTest, trans, debugCam);
+		DrawFunc3D::DrawPBRShadingModel(ligMgr, drawTest, trans, debugCam);
 	}
 	else
 	{

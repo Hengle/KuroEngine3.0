@@ -27,4 +27,10 @@ struct Material
     float specularFactor;
     float shininess;
     float reflection;
+    
+    //PBR
+    float3 baseColor;
+    float metalness;
+    float specular_pbr;
+    float roughness;
 };

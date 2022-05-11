@@ -19,6 +19,7 @@ namespace Light
 		class ConstData
 		{
 		public:
+			unsigned int active;
 			Color color;
 			Vec3<float>dir = DEFAULT_DIR;
 		}constData;
@@ -41,6 +42,17 @@ namespace Light
 			const auto dir = KuroFunc::TransformVec3(Dir, KuroMath::RotateMat(Rotate));
 			SetDir(dir);
 		}
+		void SetActive(const bool& Active)
+		{
+			unsigned int val = Active ? 1 : 0;
+			if (constData.active == val)return;
+			constData.active = val;
+			dirty = true;
+		}
+		void SetActive()
+		{
+			SetActive(1 - constData.active);
+		}
 	};
 
 	class Point
@@ -51,9 +63,11 @@ namespace Light
 		class ConstData
 		{
 		public:
+			unsigned int active;
 			Color color;
 			Vec3<float>pos = { 0.0f,1.0f,0.0f };
 			float influenceRange = 20.0f;
+			int pad[3];
 		}constData;
 
 	public:
@@ -78,6 +92,17 @@ namespace Light
 			constData.influenceRange = Range;
 			dirty = true;
 		}
+		void SetActive(const bool& Active)
+		{
+			unsigned int val = Active ? 1 : 0;
+			if (constData.active == val)return;
+			constData.active = val;
+			dirty = true;
+		}
+		void SetActive()
+		{
+			SetActive(1 - constData.active);
+		}
 	};
 
 	class Spot
@@ -88,11 +113,13 @@ namespace Light
 		class ConstData
 		{
 		public:
+			unsigned int active;
 			Color color;
 			Vec3<float>pos = { 0.0f,1.0f,0.0f };
 			float influenceRange = 20.0f;
 			Vec3<float>target = { 0.0f,0.0f,0.0f };
 			Angle angle = 30.0f;
+			int pad[3];
 		}constData;
 
 	public:
@@ -126,6 +153,17 @@ namespace Light
 			constData.angle = Angle;
 			dirty = true;
 		}
+		void SetActive(const bool& Active)
+		{
+			unsigned int val = Active ? 1 : 0;
+			if (constData.active == val)return;
+			constData.active = val;
+			dirty = true;
+		}
+		void SetActive()
+		{
+			SetActive(1 - constData.active);
+		}
 	};
 
 	class HemiSphere
@@ -136,10 +174,10 @@ namespace Light
 		class ConstData
 		{
 		public:
+			unsigned int active;
 			Color skyColor = Color(0.4f, 0.6f, 0.8f, 1.0f);
 			Color groundColor = Color(0.15f, 0.7f, 0.95f, 1.0f);
 			Vec3<float>groundNormal = { 0.0f,1.0f,0.0f };
-			float pad;
 		}constData;
 
 	public:
@@ -160,6 +198,17 @@ namespace Light
 			if (constData.groundNormal == GroundNormal)return;
 			constData.groundNormal = GroundNormal;
 			dirty = true;
+		}
+		void SetActive(const bool& Active)
+		{
+			unsigned int val = Active ? 1 : 0;
+			if (constData.active == val)return;
+			constData.active = val;
+			dirty = true;
+		}
+		void SetActive()
+		{
+			SetActive(1 - constData.active);
 		}
 	};
 

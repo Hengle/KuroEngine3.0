@@ -29,6 +29,7 @@ public:
 		float specularFactor = 1.0f;
 		float shininess = 0.0f;					//Œõ‘ò
 		float reflection = 0.0f;					//”½ŽË(’l‚ª‘å‚«‚¢‚Æ‹¾‚Ì‚æ‚¤‚É‚È‚é)
+		float pad;
 	};
 	struct PBR
 	{

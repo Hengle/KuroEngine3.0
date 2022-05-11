@@ -1,6 +1,7 @@
 #include"ModelInfo.hlsli"
 #include"Camera.hlsli"
 #include"LightInfo.hlsli"
+#include"Math.hlsli"
 
 cbuffer cbuff0 : register(b0)
 {
@@ -90,8 +91,8 @@ VSOutput VSmain(Vertex input)
     
     // 法線にワールド行列によるスケーリング・回転を適用
     float4 wnormal = mul(world, float4(input.normal, 0));
-    output.wnormal = wnormal.xyz;
-    output.vnormal = mul(cam.view, wnormal).xyz;
+    output.wnormal = normalize(wnormal.xyz);
+    output.vnormal = normalize(mul(cam.view, wnormal).xyz);
     output.uv = input.uv;
     return output;
 }
@@ -102,6 +103,88 @@ struct PSOutput
     //float4 emissive : SV_Target1;
 };
 
+//Schlickによる近似式
+float SchlickFresnel(float f0, float f90, float cosine)
+{
+    float m = saturate(1 - cosine);
+    float m2 = m * m;
+    float m5 = m2 * m2 * m;
+    return lerp(f0, f90, m5);
+}
+
+//UE4のGGX分布
+float DistributionGGX(float alpha,float NdotH)
+{
+    float alpha2 = alpha * alpha;
+    float t = NdotH * NdotH * (alpha2 - 1.0f) + 1.0f;
+    return alpha2 / (PI * t * t);
+}
+
+float3 SchlickFresnel3(float3 f0, float3 f90, float cosine)
+{
+    float m = saturate(1 - cosine);
+    float m2 = m * m;
+    float m5 = m2 * m2 * m;
+    return lerp(f0, f90, m5);
+}
+
+float3 DisneyFresnel(float LdotH)
+{
+    float luminance = 0.3f * material.baseColor.r + 0.6 * material.baseColor.g + 0.1f * material.baseColor.b;
+    float3 tintColor = material.baseColor / luminance;
+    float3 nonMetalColor = material.specular_pbr * 0.08f * tintColor;
+    float3 specularColor = lerp(nonMetalColor, material.baseColor, material.metalness);
+    return SchlickFresnel3(specularColor, float3(1, 1, 1), LdotH);
+}
+
+//UE4のSmithモデル
+float GeometricSmith(float cosine)
+{
+    float k = (material.roughness + 1.0f);
+    k = k * k / 8.0f;
+    return cosine / (cosine * (1.0f - k) + k);
+}
+
+//鏡面反射の計算
+float3 CookTorranceSpecular(float NdotL,float NdotV,float NdotH,float LdotH)
+{
+    float Ds = DistributionGGX(material.roughness * material.roughness, NdotH);
+    float3 Fs = DisneyFresnel(LdotH);
+    float Gs = GeometricSmith(NdotL) * GeometricSmith(NdotV);
+    float m = 4.0f * NdotL * NdotV;
+    return Ds * Fs * Gs / m;
+}
+
+//双方向反射分布関数
+float3 BRDF(float3 LigDirection, float3 LigColor, float3 WorldNormal, float3 WorldPos, float3 EyePos)
+{
+    float3 L = -LigDirection;
+    float3 V = normalize(EyePos - WorldPos);
+    float NdotL = dot(WorldNormal, L);
+    float NdotV = dot(WorldNormal, V);
+    if (NdotL < 0 || NdotV < 0)
+    {
+        return float3(0, 0, 0);
+    }
+    
+    float3 H = normalize(L + V);
+    float NdotH = dot(WorldNormal, H);
+    float LdotH = dot(L, H);
+    
+    float diffuseReflectance = 1.0f / PI;
+    
+    float energyBias = 0.5f * material.roughness;
+    float Fd90 = energyBias + 2.0f * LdotH * LdotH * material.roughness;
+    float FL = SchlickFresnel(1.0f, Fd90, NdotL);
+    float FV = SchlickFresnel(1.0f, Fd90, NdotV);
+    float energyFactor = lerp(1.0f, 1.0f / 1.51f, material.roughness);
+    float Fd = FL * FV * energyFactor;
+    
+    float3 diffuseColor = diffuseReflectance * Fd * material.baseColor * (1 - material.metalness);
+    float3 specularColor = CookTorranceSpecular(NdotL, NdotV, NdotH, LdotH);
+    
+    return diffuseColor + specularColor;
+}
 
 PSOutput PSmain(VSOutput input) : SV_TARGET
 {
@@ -111,22 +194,20 @@ PSOutput PSmain(VSOutput input) : SV_TARGET
     //ディレクションライト
     for (int i = 0; i < ligNum.dirLigNum; ++i)
     {
+        if (!dirLight[i].active)continue;
+        
         float3 dir = dirLight[i].direction;
         float3 ligCol = dirLight[i].color.xyz * dirLight[i].color.w;
-        ligEffect += CalcNormalizeLambertDiffuse(dir, ligCol, input.wnormal) * (material.diffuse * material.diffuseFactor);
-        ligEffect += CalcPhongSpecular(dir, ligCol, input.wnormal, input.worldpos, cam.eyePos) * (material.specular * material.specularFactor);
-        ligEffect += CalcLimLight(dir, ligCol, input.wnormal, input.vnormal);
+        ligEffect += BRDF(dir, ligCol, input.wnormal, input.worldpos, cam.eyePos);
     }
     //ポイントライト
     for (int i = 0; i < ligNum.ptLigNum; ++i)
     {
+        if (!pointLight[i].active)continue;
+        
         float3 dir = input.worldpos - pointLight[i].pos;
         dir = normalize(dir);
         float3 ligCol = pointLight[i].color.xyz * pointLight[i].color.w;
-        
-        //減衰なし状態
-        float3 diffPoint = CalcNormalizeLambertDiffuse(dir, ligCol, input.wnormal);
-        float3 specPoint = CalcPhongSpecular(dir, ligCol, input.wnormal, input.worldpos, cam.eyePos);
         
         //距離による減衰
         float3 distance = length(input.worldpos - pointLight[i].pos);
@@ -137,16 +218,14 @@ PSOutput PSmain(VSOutput input) : SV_TARGET
             affect = 0.0f;
 		//影響を指数関数的にする
         affect = pow(affect, 3.0f);
-        diffPoint *= affect;
-        specPoint *= affect;
         
-        ligEffect += diffPoint * (material.diffuse * material.diffuseFactor);
-        ligEffect += specPoint * (material.specular * material.specularFactor);
-        ligEffect += CalcLimLight(dir, ligCol, input.wnormal, input.vnormal);
+        ligEffect += BRDF(dir, ligCol, input.wnormal, input.worldpos, cam.eyePos) * affect;
     }
     //スポットライト
     for (int i = 0; i < ligNum.spotLigNum; ++i)
     {
+        if (!spotLight[i].active)continue;
+        
         float3 ligDir = input.worldpos - spotLight[i].pos;
         ligDir = normalize(ligDir);
         float3 ligCol = spotLight[i].color.xyz * spotLight[i].color.w;
@@ -184,6 +263,8 @@ PSOutput PSmain(VSOutput input) : SV_TARGET
     //天球
     for (int i = 0; i < ligNum.hemiSphereNum; ++i)
     {
+        if (!hemiSphereLight[i].active)continue;
+        
         float t = dot(input.wnormal.xyz, hemiSphereLight[i].groundNormal);
         t = (t + 1.0f) / 2.0f;
         float3 hemiLight = lerp(hemiSphereLight[i].groundColor, hemiSphereLight[i].skyColor, t);
@@ -191,8 +272,7 @@ PSOutput PSmain(VSOutput input) : SV_TARGET
     }
     
     float4 result = tex.Sample(smp, input.uv);
-    result.xyz += material.ambient * material.ambientFactor;
-    result.xyz *= ligEffect;
+    result.xyz = ligEffect * result.xyz;
     result.w *= (1.0f - material.transparent);
     
     PSOutput output;
