@@ -1150,6 +1150,25 @@ std::shared_ptr<Model> Importer::LoadFBXModel(const std::string& Dir, const std:
 	return result;
 }
 
+void Importer::LoadGLTFMaterial(const MATERIAL_TEX_TYPE& Type, std::weak_ptr<Material> AttachMaterial, const Microsoft::glTF::Image& Img, const std::string& Dir, const Microsoft::glTF::GLTFResourceReader& Reader, const Microsoft::glTF::Document& Doc)
+{
+	auto material = AttachMaterial.lock();
+	//テクスチャ画像ファイル読み込み
+	if (!Img.uri.empty())
+	{
+		std::string path = Dir + Img.uri;
+		material->texBuff[Type] = D3D12App::Instance()->GenerateTextureBuffer(path);
+	}
+	//テクスチャ画像がgltfに埋め込まれている
+	else if (!Img.bufferViewId.empty())
+	{
+		auto imageBufferView = Doc.bufferViews.Get(Img.bufferViewId);
+		auto imageData = Reader.ReadBinaryData<char>(Doc, imageBufferView);
+		std::string path = "glTF - Load (" + Img.mimeType + ") - " + Img.name;
+		material->texBuff[Type] = D3D12App::Instance()->GenerateTextureBuffer(imageData);
+	}
+}
+
 #include<sstream>
 std::shared_ptr<Model> Importer::LoadGLTFModel(const std::string& Dir, const std::string& FileName)
 {
@@ -1258,27 +1277,35 @@ std::shared_ptr<Model> Importer::LoadGLTFModel(const std::string& Dir, const std
 
 		//カラーテクスチャ
 		auto textureId = m.metallicRoughness.baseColorTexture.textureId;
-		if (textureId.empty())textureId = m.normalTexture.textureId;
-
 		if (!textureId.empty())
 		{
 			auto& texture = doc.textures.Get(textureId);
 			auto& image = doc.images.Get(texture.imageId);
-
-			//テクスチャ画像ファイル読み込み
-			if (!image.uri.empty())
-			{
-				std::string path = Dir + image.uri;
-				material->texBuff[COLOR_TEX] = D3D12App::Instance()->GenerateTextureBuffer(path);
-			}
-			//テクスチャ画像がgltfに埋め込まれている
-			else if (!image.bufferViewId.empty())
-			{
-				auto imageBufferView = doc.bufferViews.Get(image.bufferViewId);
-				auto imageData = resourceReader->ReadBinaryData<char>(doc, imageBufferView);
-				std::string path = "glTF - Load (" + image.mimeType + ") - " + image.name;
-				material->texBuff[COLOR_TEX] = D3D12App::Instance()->GenerateTextureBuffer(imageData);
-			}
+			LoadGLTFMaterial(COLOR_TEX, material, image, Dir, *resourceReader, doc);
+		}
+		//エミッシブ
+		textureId = m.emissiveTexture.textureId;
+		if (!textureId.empty())
+		{
+			auto& texture = doc.textures.Get(textureId);
+			auto& image = doc.images.Get(texture.imageId);
+			LoadGLTFMaterial(EMISSIVE_TEX, material, image, Dir, *resourceReader, doc);
+		}
+		//ノーマルマップ
+		textureId = m.normalTexture.textureId;
+		if (!textureId.empty())
+		{
+			auto& texture = doc.textures.Get(textureId);
+			auto& image = doc.images.Get(texture.imageId);
+			LoadGLTFMaterial(NORMAL_TEX, material, image, Dir, *resourceReader, doc);
+		}
+		//ラフネス
+		textureId = m.metallicRoughness.metallicRoughnessTexture.textureId;
+		if (!textureId.empty())
+		{
+			auto& texture = doc.textures.Get(textureId);
+			auto& image = doc.images.Get(texture.imageId);
+			LoadGLTFMaterial(ROUGHNESS_TEX, material, image, Dir, *resourceReader, doc);
 		}
 
 		material->CreateBuff();

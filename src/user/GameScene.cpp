@@ -12,7 +12,8 @@ GameScene::GameScene()
 		Importer::Instance()->LoadGLTFModel("resource/user/gltf/", "monkey.glb"),
 		 Importer::Instance()->LoadFBXModel("resource/user/", "Dragon.FBX"),
 		 Importer::Instance()->LoadGLTFModel("resource/user/gltf/", "player.glb"),
-		 Importer::Instance()->LoadFBXModel("resource/user/gltf/metalball/", "metalball.fbx"),
+		 //Importer::Instance()->LoadFBXModel("resource/user/gltf/metalball/", "metalball.fbx"),
+		 Importer::Instance()->LoadGLTFModel("resource/user/gltf/metalball/", "metalball.glb"),
 		 Importer::Instance()->LoadFBXModel("resource/user/gltf/woodball/", "woodcube.fbx"),
 	};
 	models = std::move(loadModels);
@@ -20,7 +21,7 @@ GameScene::GameScene()
 	models[METAL_BALL_FBX]->meshes[0].material->texBuff[METALNESS_TEX] = D3D12App::Instance()->GenerateTextureBuffer("resource/user/gltf/metalball/MetalStainlessSteelBrushedElongated005_METALNESS_3K_METALNESS.jpg");
 	models[METAL_BALL_FBX]->meshes[0].material->texBuff[ROUGHNESS_TEX] = D3D12App::Instance()->GenerateTextureBuffer("resource/user/gltf/metalball/MetalStainlessSteelBrushedElongated005_ROUGHNESS_3K_METALNESS.jpg");
 
-	models[WOOD_CUBE_FBX]->meshes[0].material->texBuff[NORMAL_TEX] = D3D12App::Instance()->GenerateTextureBuffer("resource/user/gltf/woodball/WoodFineDark004_NRM_3K.jpg");
+	//models[WOOD_CUBE_FBX]->meshes[0].material->texBuff[NORMAL_TEX] = D3D12App::Instance()->GenerateTextureBuffer("resource/user/gltf/woodball/WoodFineDark004_NRM_3K.jpg");
 
 	//dirLig.SetDir(Vec3<Angle>(50, -30, 0));
 	ligMgr.RegisterDirLight(&dirLig);

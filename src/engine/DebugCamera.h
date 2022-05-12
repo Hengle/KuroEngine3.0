@@ -4,7 +4,6 @@ class DebugCamera
 {
 	Camera cam;
 
-	Vec2<float>rotate = { 0.0f,0.0f };
 	//カメラ～注視点までの距離
 	float dist = 20.0f;
 	//スケーリング
