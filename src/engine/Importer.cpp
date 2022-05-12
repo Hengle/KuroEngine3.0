@@ -620,6 +620,20 @@ void Importer::LoadGLTFPrimitive(ModelMesh& ModelMesh, const Microsoft::glTF::Me
 		ModelMesh.mesh->vertices.emplace_back(vertex);
 	}
 
+	//タンジェント情報アクセッサ取得
+	if (GLTFPrimitive.HasAttribute(ACCESSOR_TANGENT))
+	{
+		auto& idTangent = GLTFPrimitive.GetAttributeAccessorId(ACCESSOR_TANGENT);
+		auto& accTangent = Doc.accessors.Get(idTangent);
+		auto vertTangent = Reader.ReadBinaryData<float>(Doc, accTangent);
+		for (uint32_t i = 0; i < vertexCount; ++i)
+		{
+			int vid0 = 3 * i, vid1 = 3 * i + 1, vid2 = 3 * i + 2;
+			ModelMesh.mesh->vertices[i].tangent = { vertTangent[vid0],vertTangent[vid1],vertTangent[vid2] };
+			ModelMesh.mesh->vertices[i].binormal = ModelMesh.mesh->vertices[i].normal.Cross(ModelMesh.mesh->vertices[i].tangent);
+		}
+	}
+
 	// 頂点インデックス用アクセッサの取得
 	auto& idIndex = GLTFPrimitive.indicesAccessorId;
 	auto& accIndex = Doc.accessors.Get(idIndex);
@@ -1108,7 +1122,6 @@ std::shared_ptr<Model> Importer::LoadFBXModel(const std::string& Dir, const std:
 		//マテリアル
 		LoadFbxMaterial(Dir, mesh, fbxMesh);
 
-		mesh.BuildTangentAndBiNormal();
 		mesh.material->CreateBuff();
 		mesh.mesh->CreateBuff();
 
@@ -1326,7 +1339,6 @@ std::shared_ptr<Model> Importer::LoadGLTFModel(const std::string& Dir, const std
 			int materialIdx = int(doc.materials.GetIndex(meshPrimitive.materialId));
 			mesh.material = loadMaterials[materialIdx];
 
-			mesh.BuildTangentAndBiNormal();
 			mesh.mesh->CreateBuff();
 			result->meshes.emplace_back(mesh);
 		}

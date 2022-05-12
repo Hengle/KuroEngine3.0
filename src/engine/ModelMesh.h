@@ -27,9 +27,9 @@ public:
 		}
 
 		Vec3<float>pos;
-		Vec3<float>normal;
-		Vec3<float>tangent;
-		Vec3<float>binormal;
+		Vec3<float>normal = { 0,0,0 };
+		Vec3<float>tangent = { 0,0,0 };
+		Vec3<float>binormal = { 0,0,0 };
 		Vec2<float>uv;
 		Vec4<signed short>boneIdx = { -1,-1,-1,-1 };
 		Vec4<float>boneWeight = { 0,0,0,0 };

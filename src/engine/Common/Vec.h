@@ -146,6 +146,10 @@ struct Vec3
 	};
 	void Normalize() {
 		float len = Length();
+		if (len == 0.0f)
+		{
+			assert(0);
+		}
 		x /= len;
 		y /= len;
 		z /= len;
@@ -173,6 +177,10 @@ struct Vec3
 			me.y * rhs.z - rhs.y * me.z,
 			me.z * rhs.x - rhs.z * me.x,
 			me.x * rhs.y - rhs.x * me.y);
+	}
+	bool IsZero() 
+	{
+		return x == 0 && y == 0 && z == 0;
 	}
 
 #pragma region オペレーター演算子
