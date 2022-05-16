@@ -1336,8 +1336,15 @@ std::shared_ptr<Model> Importer::LoadGLTFModel(const std::string& Dir, const std
 			//頂点 & インデックス情報
 			LoadGLTFPrimitive(mesh, meshPrimitive, *resourceReader, doc);
 
-			int materialIdx = int(doc.materials.GetIndex(meshPrimitive.materialId));
-			mesh.material = loadMaterials[materialIdx];
+			if (doc.materials.Has(meshPrimitive.materialId))
+			{
+				int materialIdx = int(doc.materials.GetIndex(meshPrimitive.materialId));
+				mesh.material = loadMaterials[materialIdx];
+			}
+			else
+			{
+				mesh.material = std::make_shared<Material>();
+			}
 
 			mesh.mesh->CreateBuff();
 			result->meshes.emplace_back(mesh);
