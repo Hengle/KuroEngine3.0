@@ -50,8 +50,6 @@ void DebugCamera::Move()
 
 		angleX = -dx * XM_PI;
 		angleY = -dy * XM_PI;
-		rotate.x += XMConvertToDegrees(-angleX);
-		rotate.y += XMConvertToDegrees(-angleY);
 		moveDirty = true;
 	}
 

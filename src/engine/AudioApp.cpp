@@ -38,6 +38,32 @@ void AudioApp::Update()
 	{
 		audio.playTrigger = false;
 	}
+
+	if (!playHandleArray.empty())
+	{
+		for (auto& audioArray : playHandleArray)
+		{
+			if (NowPlay(audioArray.handles[audioArray.nowIdx]))
+			{
+				audioArray.nowIdx++;
+
+				if (audioArray.nowIdx < audioArray.handles.size())
+				{
+					PlayWave(audioArray.handles[audioArray.nowIdx]);
+				}
+			}
+		}
+
+		//全部再生しきったら削除
+		for (auto itr = playHandleArray.begin(); itr != playHandleArray.end();)
+		{
+			if (itr->handles.size() <= itr->nowIdx)
+			{
+				itr = playHandleArray.erase(itr);
+			}
+			else ++itr;
+		}
+	}
 }
 
 bool AudioApp::NowPlay(const int& Handle)
@@ -81,7 +107,7 @@ float AudioApp::GetVolume(const int& Handle)
 	return itr->volume;
 }
 
-int AudioApp::LoadAudio(string FileName)
+int AudioApp::LoadAudio(string FileName, const float& Volume)
 {
 	//if (!audios.empty())
 	//{
@@ -205,7 +231,11 @@ int AudioApp::LoadAudio(string FileName)
 	//Waveファイルを閉じる
 	file.close();
 
-	return audios.size() - 1;
+	int handle = audios.size() - 1;
+
+	ChangeVolume(handle, Volume);
+
+	return handle;
 }
 
 int AudioApp::PlayWave(const int& Handle, bool LoopFlag)

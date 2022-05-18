@@ -207,12 +207,12 @@ void Importer::LoadFbxVertex(ModelMesh& ModelMesh, FbxMesh* FbxMesh, BoneTable& 
 		int index = indices[i];
 
 		//頂点座標リストから座標を取得
-		vertex.pos.x = vertices[index][0];
+		vertex.pos.x = -vertices[index][0];
 		vertex.pos.y = vertices[index][1];
 		vertex.pos.z = vertices[index][2];
 
 		//法線リストから法線を取得
-		vertex.normal.x = (float)normals[i][0];
+		vertex.normal.x = -(float)normals[i][0];
 		vertex.normal.y = (float)normals[i][1];
 		vertex.normal.z = (float)normals[i][2];
 
@@ -235,6 +235,7 @@ void Importer::LoadFbxIndex(ModelMesh& ModelMesh, FbxMesh* FbxMesh)
 	{
 		//左手系（右周り）
 		ModelMesh.mesh->indices.emplace_back(i * 3 + 1);
+		ModelMesh.mesh->indices.emplace_back(i * 3);
 		ModelMesh.mesh->indices.emplace_back(i * 3 + 2);
 		ModelMesh.mesh->indices.emplace_back(i * 3);
 	}
@@ -309,25 +310,25 @@ void Importer::LoadFbxMaterial(const std::string& Dir, ModelMesh& ModelMesh, Fbx
 		FbxSurfaceLambert* lambert = (FbxSurfaceLambert*)material;
 
 		//アンビエント
-		info.ambient.x = (float)lambert->Ambient.Get()[0];
-		info.ambient.y = (float)lambert->Ambient.Get()[1];
-		info.ambient.z = (float)lambert->Ambient.Get()[2];
-		info.ambientFactor = (float)lambert->AmbientFactor.Get();
+		info.lambert.ambient.x = (float)lambert->Ambient.Get()[0];
+		info.lambert.ambient.y = (float)lambert->Ambient.Get()[1];
+		info.lambert.ambient.z = (float)lambert->Ambient.Get()[2];
+		info.lambert.ambientFactor = (float)lambert->AmbientFactor.Get();
 
 		//ディフューズ
-		info.diffuse.x = (float)lambert->Diffuse.Get()[0];
-		info.diffuse.y = (float)lambert->Diffuse.Get()[1];
-		info.diffuse.z = (float)lambert->Diffuse.Get()[2];
-		info.diffuseFactor = (float)lambert->DiffuseFactor.Get();
+		info.lambert.diffuse.x = (float)lambert->Diffuse.Get()[0];
+		info.lambert.diffuse.y = (float)lambert->Diffuse.Get()[1];
+		info.lambert.diffuse.z = (float)lambert->Diffuse.Get()[2];
+		info.lambert.diffuseFactor = (float)lambert->DiffuseFactor.Get();
 
 		//放射
-		info.emissive.x = (float)lambert->Emissive.Get()[0];
-		info.emissive.y = (float)lambert->Emissive.Get()[1];
-		info.emissive.z = (float)lambert->Emissive.Get()[2];
-		info.emissiveFactor = (float)lambert->EmissiveFactor.Get();
+		info.lambert.emissive.x = (float)lambert->Emissive.Get()[0];
+		info.lambert.emissive.y = (float)lambert->Emissive.Get()[1];
+		info.lambert.emissive.z = (float)lambert->Emissive.Get()[2];
+		info.lambert.emissiveFactor = (float)lambert->EmissiveFactor.Get();
 
 		//透過度
-		info.transparent = (float)lambert->TransparencyFactor.Get();
+		info.lambert.transparent = (float)lambert->TransparencyFactor.Get();
 
 		//Phong
 		if (material->GetClassId().Is(FbxSurfacePhong::ClassId))
@@ -335,16 +336,16 @@ void Importer::LoadFbxMaterial(const std::string& Dir, ModelMesh& ModelMesh, Fbx
 			FbxSurfacePhong* phong = (FbxSurfacePhong*)material;
 
 			//スペキュラー
-			info.specular.x = (float)phong->Specular.Get()[0];
-			info.specular.y = (float)phong->Specular.Get()[1];
-			info.specular.z = (float)phong->Specular.Get()[2];
-			info.specularFactor = (float)phong->SpecularFactor.Get();
+			info.phong.specular.x = (float)phong->Specular.Get()[0];
+			info.phong.specular.y = (float)phong->Specular.Get()[1];
+			info.phong.specular.z = (float)phong->Specular.Get()[2];
+			info.phong.specularFactor = (float)phong->SpecularFactor.Get();
 
 			//光沢
-			info.shininess = (float)phong->Shininess.Get();
+			info.phong.shininess = (float)phong->Shininess.Get();
 
 			//反射
-			info.reflection = (float)phong->ReflectionFactor.Get();
+			info.phong.reflection = (float)phong->ReflectionFactor.Get();
 
 			//放射テクスチャ
 			FbxFileTexture* emissiveTex = nullptr;
@@ -362,31 +363,114 @@ void Importer::LoadFbxMaterial(const std::string& Dir, ModelMesh& ModelMesh, Fbx
 			}
 		}
 
-		//ディヒューズがテクスチャの情報を持っている
-		auto prop = material->FindProperty(FbxSurfaceMaterial::sDiffuse);
-		//FbxFileTextureを取得
-		FbxFileTexture* tex = nullptr;
-		int textureNum = prop.GetSrcObjectCount<FbxFileTexture>();
-		if (0 < textureNum)
+		//PBR
+		//ベースカラー
 		{
-			//propからFbxFileTextureを取得
-			tex = prop.GetSrcObject<FbxFileTexture>(0);
-		}
-		else
-		{
-			//失敗したらマルチテクスチャの可能性を考えてFbxLayeredTextureを指定
-			//FbxLayeredTextureからFbxFileTextureを取得
-			int layerNum = prop.GetSrcObjectCount<FbxLayeredTexture>();
-			if (0 < layerNum)
+			const auto propBaseColor = FbxSurfaceMaterialUtils::GetProperty("baseColor", material);
+			if (propBaseColor.IsValid())
 			{
-				tex = prop.GetSrcObject<FbxFileTexture>(0);
+				const FbxFileTexture* baseColorTex = propBaseColor.GetSrcObject<FbxFileTexture>();
+
+				if (baseColorTex)
+				{
+					auto path = Dir + GetFileName(baseColorTex->GetRelativeFileName());
+					newMaterial->texBuff[BASE_COLOR_TEX] = D3D12App::Instance()->GenerateTextureBuffer(path);
+				}
+				else
+				{
+					auto baseCol = propBaseColor.Get<FbxDouble3>();
+					newMaterial->constData.pbr.baseColor.x = (float)baseCol.Buffer()[0];
+					newMaterial->constData.pbr.baseColor.y = (float)baseCol.Buffer()[1];
+					newMaterial->constData.pbr.baseColor.z = (float)baseCol.Buffer()[2];
+				}
+			}
+		}
+		//金属度
+		{
+			const auto propMetalness = FbxSurfaceMaterialUtils::GetProperty("metalness", material);
+			if (propMetalness.IsValid())
+			{
+				const FbxFileTexture* metalnessTex = propMetalness.GetSrcObject<FbxFileTexture>();
+
+				if (metalnessTex)
+				{
+					auto path = Dir + GetFileName(metalnessTex->GetRelativeFileName());
+					newMaterial->texBuff[METALNESS_TEX] = D3D12App::Instance()->GenerateTextureBuffer(path);
+				}
+				else 
+				{
+					newMaterial->constData.pbr.metalness = propMetalness.Get<float>();
+				}
+			}
+		}
+		//PBRスペキュラー
+		const auto propSpecular = FbxSurfaceMaterialUtils::GetProperty("specular", material);
+		if (propSpecular.IsValid())
+		{
+			newMaterial->constData.pbr.specular = propSpecular.Get<float>();
+		}
+		//粗さ
+		{
+			const auto propRoughness = FbxSurfaceMaterialUtils::GetProperty("specularRoughness", material);
+			if (propRoughness.IsValid())
+			{
+				const FbxFileTexture* roughnessTex = propRoughness.GetSrcObject<FbxFileTexture>();
+
+				if (roughnessTex)
+				{
+					auto path = Dir + GetFileName(roughnessTex->GetRelativeFileName());
+					newMaterial->texBuff[ROUGHNESS_TEX] = D3D12App::Instance()->GenerateTextureBuffer(path);
+				}
+				else
+				{
+					newMaterial->constData.pbr.roughness = propRoughness.Get<float>();
+				}
 			}
 		}
 
-		if (tex != nullptr)
+		//ディヒューズがテクスチャの情報を持っている
 		{
-			auto path = Dir + GetFileName(tex->GetRelativeFileName());
-			newMaterial->texBuff[COLOR_TEX] = D3D12App::Instance()->GenerateTextureBuffer(path);
+			auto prop = material->FindProperty(FbxSurfaceMaterial::sDiffuse);
+			//FbxFileTextureを取得
+			FbxFileTexture* tex = nullptr;
+			int textureNum = prop.GetSrcObjectCount<FbxFileTexture>();
+			if (0 < textureNum)
+			{
+				//propからFbxFileTextureを取得
+				tex = prop.GetSrcObject<FbxFileTexture>(0);
+			}
+			else
+			{
+				//失敗したらマルチテクスチャの可能性を考えてFbxLayeredTextureを指定
+				//FbxLayeredTextureからFbxFileTextureを取得
+				int layerNum = prop.GetSrcObjectCount<FbxLayeredTexture>();
+				if (0 < layerNum)
+				{
+					tex = prop.GetSrcObject<FbxFileTexture>(0);
+				}
+			}
+
+			if (tex != nullptr)
+			{
+				const auto fileName = GetFileName(tex->GetRelativeFileName());
+				if (!fileName.empty())
+				{
+					auto path = Dir + fileName;
+					newMaterial->texBuff[COLOR_TEX] = D3D12App::Instance()->GenerateTextureBuffer(path);
+				}
+			}
+		}
+
+		//法線マップ
+		const FbxProperty propNormalCamera = FbxSurfaceMaterialUtils::GetProperty("normalCamera", material);
+		if (propNormalCamera.IsValid())
+		{
+			const FbxFileTexture* normalTex = propNormalCamera.GetSrcObject<FbxFileTexture>();
+			if (normalTex)
+			{
+				auto path = Dir + GetFileName(normalTex->GetRelativeFileName());
+				newMaterial->texBuff[NORMAL_TEX] = D3D12App::Instance()->GenerateTextureBuffer(path);
+			}
 		}
 
 		ModelMesh.material = newMaterial;
@@ -484,18 +568,31 @@ void Importer::LoadGLTFPrimitive(ModelMesh& ModelMesh, const Microsoft::glTF::Me
 	// 頂点位置情報アクセッサの取得
 	auto& idPos = GLTFPrimitive.GetAttributeAccessorId(ACCESSOR_POSITION);
 	auto& accPos = Doc.accessors.Get(idPos);
+	auto vertPos = Reader.ReadBinaryData<float>(Doc, accPos);
 	// 法線情報アクセッサの取得
 	auto& idNrm = GLTFPrimitive.GetAttributeAccessorId(ACCESSOR_NORMAL);
 	auto& accNrm = Doc.accessors.Get(idNrm);
+	auto vertNrm = Reader.ReadBinaryData<float>(Doc, accNrm);
 	// テクスチャ座標情報アクセッサの取得
 	auto& idUV = GLTFPrimitive.GetAttributeAccessorId(ACCESSOR_TEXCOORD_0);
 	auto& accUV = Doc.accessors.Get(idUV);
+	auto vertUV = Reader.ReadBinaryData<float>(Doc, accUV);
 
-	auto& idJoint = GLTFPrimitive.GetAttributeAccessorId(ACCESSOR_JOINTS_0);
-	auto& accJoint = Doc.accessors.Get(idJoint);
+	std::vector<uint8_t>vertJoint;
+	if (GLTFPrimitive.HasAttribute(ACCESSOR_JOINTS_0))
+	{
+		auto& idJoint = GLTFPrimitive.GetAttributeAccessorId(ACCESSOR_JOINTS_0);
+		auto& accJoint = Doc.accessors.Get(idJoint);
+		vertJoint = Reader.ReadBinaryData<uint8_t>(Doc, accJoint);
+	}
 
-	auto& idWeight = GLTFPrimitive.GetAttributeAccessorId(ACCESSOR_WEIGHTS_0);
-	auto& accWeight = Doc.accessors.Get(idWeight);
+	std::vector<float>vertWeight;
+	if (GLTFPrimitive.HasAttribute(ACCESSOR_WEIGHTS_0))
+	{
+		auto& idWeight = GLTFPrimitive.GetAttributeAccessorId(ACCESSOR_WEIGHTS_0);
+		auto& accWeight = Doc.accessors.Get(idWeight);
+		vertWeight = Reader.ReadBinaryData<float>(Doc, accWeight);
+	}
 
 	// アクセッサからデータ列を取得
 	auto vertPos = Reader.ReadBinaryData<float>(Doc, accPos);
@@ -517,12 +614,32 @@ void Importer::LoadGLTFPrimitive(ModelMesh& ModelMesh, const Microsoft::glTF::Me
 		vertex.normal = { vertNrm[vid0],vertNrm[vid1],vertNrm[vid2] };
 		vertex.uv = { vertUV[tid0],vertUV[tid1] };
 
-		vertex.boneWeight = { vertWeight[jid0],vertWeight[jid1],vertWeight[jid2],vertWeight[jid3] };
-		if (vertex.boneWeight.x)vertex.boneIdx.x = static_cast<signed short>(vertJoint[jid0]);
-		if (vertex.boneWeight.y)vertex.boneIdx.y = static_cast<signed short>(vertJoint[jid1]);
-		if (vertex.boneWeight.z)vertex.boneIdx.z = static_cast<signed short>(vertJoint[jid2]);
-		if (vertex.boneWeight.w)vertex.boneIdx.w = static_cast<signed short>(vertJoint[jid3]);
+		if (!vertJoint.empty())
+		{
+			if (vertex.boneWeight.x)vertex.boneIdx.x = static_cast<signed short>(vertJoint[jid0]);
+			if (vertex.boneWeight.y)vertex.boneIdx.y = static_cast<signed short>(vertJoint[jid1]);
+			if (vertex.boneWeight.z)vertex.boneIdx.z = static_cast<signed short>(vertJoint[jid2]);
+			if (vertex.boneWeight.w)vertex.boneIdx.w = static_cast<signed short>(vertJoint[jid3]);
+		}
+		if (!vertWeight.empty())
+		{
+			vertex.boneWeight = { vertWeight[jid0],vertWeight[jid1],vertWeight[jid2],vertWeight[jid3] };
+		}
 		ModelMesh.mesh->vertices.emplace_back(vertex);
+	}
+
+	//タンジェント情報アクセッサ取得
+	if (GLTFPrimitive.HasAttribute(ACCESSOR_TANGENT))
+	{
+		auto& idTangent = GLTFPrimitive.GetAttributeAccessorId(ACCESSOR_TANGENT);
+		auto& accTangent = Doc.accessors.Get(idTangent);
+		auto vertTangent = Reader.ReadBinaryData<float>(Doc, accTangent);
+		for (uint32_t i = 0; i < vertexCount; ++i)
+		{
+			int vid0 = 3 * i, vid1 = 3 * i + 1, vid2 = 3 * i + 2;
+			ModelMesh.mesh->vertices[i].tangent = { vertTangent[vid0],vertTangent[vid1],vertTangent[vid2] };
+			ModelMesh.mesh->vertices[i].binormal = ModelMesh.mesh->vertices[i].normal.Cross(ModelMesh.mesh->vertices[i].tangent);
+		}
 	}
 
 	// 頂点インデックス用アクセッサの取得
@@ -913,7 +1030,7 @@ std::shared_ptr<Model> Importer::LoadFBXModel(const std::string& Dir, const std:
 
 	//拡張子取得
 	const auto ext = "." + KuroFunc::GetExtension(FileName);
-	ErrorMessage(FUNC_NAME, ext != ".fbx", "拡張子が合いません\n");
+	ErrorMessage(FUNC_NAME, ext != ".fbx" && ext != ".FBX", "拡張子が合いません\n");
 
 	//モデル名取得(ファイル名から拡張子を除いたもの)
 	auto modelName = FileName;
@@ -1054,6 +1171,25 @@ std::shared_ptr<Model> Importer::LoadFBXModel(const std::string& Dir, const std:
 	return result;
 }
 
+void Importer::LoadGLTFMaterial(const MATERIAL_TEX_TYPE& Type, std::weak_ptr<Material> AttachMaterial, const Microsoft::glTF::Image& Img, const std::string& Dir, const Microsoft::glTF::GLTFResourceReader& Reader, const Microsoft::glTF::Document& Doc)
+{
+	auto material = AttachMaterial.lock();
+	//テクスチャ画像ファイル読み込み
+	if (!Img.uri.empty())
+	{
+		std::string path = Dir + Img.uri;
+		material->texBuff[Type] = D3D12App::Instance()->GenerateTextureBuffer(path);
+	}
+	//テクスチャ画像がgltfに埋め込まれている
+	else if (!Img.bufferViewId.empty())
+	{
+		auto imageBufferView = Doc.bufferViews.Get(Img.bufferViewId);
+		auto imageData = Reader.ReadBinaryData<char>(Doc, imageBufferView);
+		std::string path = "glTF - Load (" + Img.mimeType + ") - " + Img.name;
+		material->texBuff[Type] = D3D12App::Instance()->GenerateTextureBuffer(imageData);
+	}
+}
+
 #include<sstream>
 std::shared_ptr<Model> Importer::LoadGLTFModel(const std::string& Dir, const std::string& FileName)
 {
@@ -1151,27 +1287,46 @@ std::shared_ptr<Model> Importer::LoadGLTFModel(const std::string& Dir, const std
 	for (auto& m : doc.materials.Elements())
 	{
 		auto material = std::make_shared<Material>();
-		auto textureId = m.metallicRoughness.baseColorTexture.textureId;
-		if (textureId.empty())
-		{
-			textureId = m.normalTexture.textureId;
-		}
-		auto& texture = doc.textures.Get(textureId);
-		auto& image = doc.images.Get(texture.imageId);
 
-		//テクスチャ画像ファイル読み込み
-		if (!image.uri.empty())
+		//PBR
+		const auto baseColor = m.metallicRoughness.baseColorFactor;
+		material->constData.pbr.baseColor.x = baseColor.r;
+		material->constData.pbr.baseColor.y = baseColor.g;
+		material->constData.pbr.baseColor.z = baseColor.b;
+		material->constData.pbr.metalness = m.metallicRoughness.metallicFactor;
+		material->constData.pbr.roughness = m.metallicRoughness.roughnessFactor;
+
+		//カラーテクスチャ
+		auto textureId = m.metallicRoughness.baseColorTexture.textureId;
+		if (!textureId.empty())
 		{
-			std::string path = Dir + image.uri;
-			material->texBuff[COLOR_TEX] = D3D12App::Instance()->GenerateTextureBuffer(path);
+			auto& texture = doc.textures.Get(textureId);
+			auto& image = doc.images.Get(texture.imageId);
+			LoadGLTFMaterial(COLOR_TEX, material, image, Dir, *resourceReader, doc);
 		}
-		//テクスチャ画像がgltfに埋め込まれている
-		else if (!image.bufferViewId.empty())
+		//エミッシブ
+		textureId = m.emissiveTexture.textureId;
+		if (!textureId.empty())
 		{
-			auto imageBufferView = doc.bufferViews.Get(image.bufferViewId);
-			auto imageData = resourceReader->ReadBinaryData<char>(doc, imageBufferView);
-			std::string path = "glTF - Load (" + image.mimeType + ") - " + image.name;
-			material->texBuff[COLOR_TEX] = D3D12App::Instance()->GenerateTextureBuffer(imageData);
+			auto& texture = doc.textures.Get(textureId);
+			auto& image = doc.images.Get(texture.imageId);
+			LoadGLTFMaterial(EMISSIVE_TEX, material, image, Dir, *resourceReader, doc);
+		}
+		//ノーマルマップ
+		textureId = m.normalTexture.textureId;
+		if (!textureId.empty())
+		{
+			auto& texture = doc.textures.Get(textureId);
+			auto& image = doc.images.Get(texture.imageId);
+			LoadGLTFMaterial(NORMAL_TEX, material, image, Dir, *resourceReader, doc);
+		}
+		//ラフネス
+		textureId = m.metallicRoughness.metallicRoughnessTexture.textureId;
+		if (!textureId.empty())
+		{
+			auto& texture = doc.textures.Get(textureId);
+			auto& image = doc.images.Get(texture.imageId);
+			LoadGLTFMaterial(ROUGHNESS_TEX, material, image, Dir, *resourceReader, doc);
 		}
 
 		material->CreateBuff();
@@ -1189,8 +1344,15 @@ std::shared_ptr<Model> Importer::LoadGLTFModel(const std::string& Dir, const std
 			//頂点 & インデックス情報
 			LoadGLTFPrimitive(mesh, meshPrimitive, *resourceReader, doc);
 
-			int materialIdx = int(doc.materials.GetIndex(meshPrimitive.materialId));
-			mesh.material = loadMaterials[materialIdx];
+			if (doc.materials.Has(meshPrimitive.materialId))
+			{
+				int materialIdx = int(doc.materials.GetIndex(meshPrimitive.materialId));
+				mesh.material = loadMaterials[materialIdx];
+			}
+			else
+			{
+				mesh.material = std::make_shared<Material>();
+			}
 
 			mesh.mesh->CreateBuff();
 			result->meshes.emplace_back(mesh);

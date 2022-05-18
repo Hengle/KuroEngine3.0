@@ -11,6 +11,8 @@
 
 #include<string>
 
+#include<vector>
+
 class AudioApp
 {
 private:
@@ -89,7 +91,14 @@ private:
 		void Unload();
 	};
 
+	struct PlayAudioArray
+	{
+		std::vector<int>handles;
+		int nowIdx = 0;
+		PlayAudioArray(const std::vector<int>& Handles) :handles(Handles) {}
+	};
 	std::list<AudioData>audios;
+	std::vector<PlayAudioArray>playHandleArray;
 
 public:
 	AudioApp();
@@ -99,7 +108,13 @@ public:
 	bool NowPlay(const int& Handle);
 	void ChangeVolume(const int& Handle, float Volume);
 	float GetVolume(const int& Handle);
-	int LoadAudio(std::string FileName);
+	int LoadAudio(std::string FileName, const float& Volume = 1.0f);
 	int PlayWave(const int& Handle, bool LoopFlag = false);
+	int PlayWaveArray(const std::vector<int>& Handles)	//•¡”‚Ì‰¹º‚ğ“¯ƒtƒŒ[ƒ€‚ÅÄ¶‚µ‚È‚¢‚æ‚¤A‡”Ô‚ÉÄ¶
+	{
+		if (Handles.empty())return 0;
+		playHandleArray.emplace_back(Handles);
+		return PlayWave(Handles[0]);
+	}
 	void StopWave(const int& Handle);
 };

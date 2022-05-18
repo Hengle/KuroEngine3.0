@@ -146,10 +146,20 @@ struct Vec3
 	};
 	void Normalize() {
 		float len = Length();
+		if (len == 0.0f)
+		{
+			assert(0);
+		}
 		x /= len;
 		y /= len;
 		z /= len;
 	};
+	//中間地点取得
+	Vec3<float>GetCenter(const Vec3& To)const {
+		const float distHalf = this->Distance(To) / 2.0f;
+		Vec3<float> vec = To - *this;
+		return *this + vec.GetNormal() * distHalf;
+	}
 	DirectX::XMFLOAT3 ConvertXMFLOAT3() {
 		return DirectX::XMFLOAT3(x, y, z);
 	};
@@ -167,6 +177,10 @@ struct Vec3
 			me.y * rhs.z - rhs.y * me.z,
 			me.z * rhs.x - rhs.z * me.x,
 			me.x * rhs.y - rhs.x * me.y);
+	}
+	bool IsZero() 
+	{
+		return x == 0 && y == 0 && z == 0;
 	}
 
 #pragma region オペレーター演算子
@@ -250,6 +264,14 @@ struct Vec3
 		y = fmodf(y, rhs.y);
 		z = fmodf(z, rhs.z);
 	};
+	T& operator[](const int& Idx)
+	{
+		if (Idx == 0)return this->x;
+		if (Idx == 1)return this->y;
+		if (Idx == 2)return this->z;
+		assert(0);
+	}
+
 #pragma endregion
 };
 

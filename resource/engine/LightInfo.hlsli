@@ -1,6 +1,7 @@
 //ディレクションライト
 struct DirectionLight
 {
+    uint active;
     float4 color;
     float3 direction;
 };
@@ -8,6 +9,7 @@ struct DirectionLight
 //ポイントライト
 struct PointLight
 {
+    uint active;
     float4 color;
     float3 pos;
     float influenceRange;
@@ -16,6 +18,7 @@ struct PointLight
 //スポットライト
 struct SpotLight
 {
+    uint active;
     float4 color;
     float3 pos;
     float influenceRange;
@@ -26,6 +29,7 @@ struct SpotLight
 //天球
 struct HemiSphereLight
 {
+    uint active;
     float4 skyColor;
     float4 groundColor;
     float3 groundNormal;
@@ -42,31 +46,40 @@ struct LightInfo
 
 float3 CalcLambertDiffuse(float3 DirDirection, float3 DirColor, float3 Normal)
 {
+    float t = saturate(dot(normalize(Normal), -DirDirection));
+	//拡散反射光
+    return DirColor * t;
+}
+
+//正規化Lambert
+float3 CalcNormalizeLambertDiffuse(float3 DirDirection, float3 DirColor, float3 Normal)
+{
     float t = dot(Normal, DirDirection);
     t *= -1.0f;
     if (t < 0.0f)
         t = 0.0f;
 	
 	//拡散反射光
-    return DirColor * t;
+    return DirColor * t / 3.1415926f;
 }
 
 float3 CalcPhongSpecular(float3 DirDirection, float3 DirColor, float3 WorldNormal, float3 WorldPos, float3 EyePos)
 {
 	//反射ベクトル
-    float3 refVec = reflect(DirDirection, WorldNormal);
+    //float3 refVec = reflect(DirDirection, WorldNormal);
 
 	//鏡面反射の強さ
-    float3 toEye = EyePos - WorldPos;
-    toEye = normalize(toEye);
-    float t = dot(refVec, toEye);
+    float3 toEye = normalize(EyePos - WorldPos);
+    //float t = dot(refVec, toEye);
+    float t = saturate(dot(normalize(WorldNormal), normalize(-DirDirection + toEye)));
     
-    if (t < 0.0f)
-    {
-        t = 0.0f;
-    }
+    //if (t < 0.0f)
+    //{
+        //t = 0.0f;
+    //}
 
 	//鏡面反射の強さを絞る
+    //t = pow(t, 5.0f);
     t = pow(t, 5.0f);
 
 	//鏡面反射光

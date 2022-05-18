@@ -16,5 +16,13 @@ public:
 	Skeleton skelton;
 
 	Model(const std::string& Dir, const std::string& FileName) :header(Dir, FileName) {}
+
+	void MeshSmoothing()
+	{
+		for (auto& m : meshes)
+		{
+			m.Smoothing();
+		}
+	}
 };
 
