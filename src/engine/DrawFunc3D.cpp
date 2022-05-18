@@ -118,7 +118,6 @@ void DrawFunc3D::DrawNonShadingModel(const std::weak_ptr<Model> Model, Transform
 		//パイプライン生成
 		PIPELINE[BlendMode] = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, ModelMesh::Vertex_Model::GetInputLayout(), ROOT_PARAMETER, RENDER_TARGET_INFO, WrappedSampler(false, false));
 	}
-	}
 
 	KuroEngine::Instance().Graphics().SetPipeline(PIPELINE[BlendMode]);
 

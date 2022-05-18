@@ -594,13 +594,6 @@ void Importer::LoadGLTFPrimitive(ModelMesh& ModelMesh, const Microsoft::glTF::Me
 		vertWeight = Reader.ReadBinaryData<float>(Doc, accWeight);
 	}
 
-	// アクセッサからデータ列を取得
-	auto vertPos = Reader.ReadBinaryData<float>(Doc, accPos);
-	auto vertNrm = Reader.ReadBinaryData<float>(Doc, accNrm);
-	auto vertUV = Reader.ReadBinaryData<float>(Doc, accUV);
-	auto vertJoint = Reader.ReadBinaryData<uint8_t>(Doc, accJoint);
-	auto vertWeight = Reader.ReadBinaryData<float>(Doc, accWeight);
-
 	auto vertexCount = accPos.count;
 	for (uint32_t i = 0; i < vertexCount; ++i)
 	{
