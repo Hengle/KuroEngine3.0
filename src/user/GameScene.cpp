@@ -1,181 +1,193 @@
 #include "GameScene.h"
 #include"KuroEngine.h"
+#include<algorithm>
 
-static const Vec2<float>INIT_VEL = { 10,10 };
-static const float RADIUS = 32.0f;
-
-void GameScene::EmitParticles(const int& Num, const Vec2<float>& EmitPos, const Vec2<float>& EmitVec, const Angle& RandAngle)
+std::shared_ptr<GameScene::Ball> GameScene::CheckHitMousePoint()
 {
-	int num = 0;
-	for (auto& p : particles)
+	const auto mousePos = UsersInput::Instance()->GetMousePos();
+
+	for (auto& b : balls)
 	{
-		if (p.life)continue;
-		float rotateAngle = KuroFunc::GetRand(-RandAngle / 2.0f, RandAngle / 2.0f);
-		p.Emit(EmitPos, KuroMath::RotateVec2(EmitVec, rotateAngle));
-		num++;
-		if (Num <= num)break;
+		float dist = mousePos.Distance(b->pos);
+		if (dist < b->radius)
+		{
+			b->hold = true;
+			b->vel = { 0,0 };
+			return b;
+		}
+	}
+	return std::shared_ptr<Ball>();
+}
+
+void GameScene::CheckHitBallUpdate(std::weak_ptr<Ball> CheckBall)
+{
+	auto checkBall = CheckBall.lock();
+	if (checkBall->vel.IsZero())return;
+
+	std::shared_ptr<Ball>hit;
+	float shortest = 10000000.0f;
+
+	for (auto& b : balls)
+	{
+		//自分自身ならスルー
+		if (b == checkBall)continue;
+
+		const auto ps = checkBall->pos;
+		const auto pe = checkBall->pos + checkBall->vel;
+
+		const auto pc = b->pos;
+
+		const auto startToSphere = pc - ps;
+		const auto startToEnd = pe - ps;
+		const auto nearLength = startToEnd.GetNormal().Dot(startToSphere);
+		const auto nearLengthRate = nearLength / startToEnd.Length();
+		const auto nearPt = ps + startToEnd * std::clamp(nearLengthRate, 0.0f, 1.0f);
+
+		const auto endToSphere = pc - pe;
+		const auto nearToSphere = pc - nearPt;
+
+		float dist = 0.0f;
+		if (nearLengthRate < 0.0f)
+		{
+			dist = startToSphere.Length();
+		}
+		else if (1.0f < nearLengthRate)
+		{
+			dist = endToSphere.Length();
+		}
+		else
+		{
+			dist = nearToSphere.Length();
+		}
+
+		if (dist - checkBall->radius - b->radius <= 0 && dist < shortest)
+		{
+			shortest = dist;
+			hit = b;
+		}
+	}
+
+	//ボール同士の反発係数
+	static const float REBOUND_E = 0.2f;
+
+	if (hit)
+	{
+		const auto m1 = checkBall->mass;
+		const auto v1 = checkBall->vel;
+		const auto m2 = hit->mass;
+		const auto v2 = hit->vel;
+		const auto e = REBOUND_E;
+
+		//衝突後の相手の速度
+		const auto v2_ = (v1 * (1 + e) * m1 + v2 * m2 + v2 * m1 * e) / (m2 - e);
+		const auto v1_ = -(v1 - v2) * e - v2_;
+
+		//押し戻し
+		//checkBall->pos = -v1.GetNormal() * (checkBall->radius + hit->radius + 1) + hit->pos;
+		checkBall->vel = v1_;
+		hit->vel = v2_;
+	}
+	else
+	{
+		checkBall->pos += checkBall->vel;
+		//空気抵抗でだんだん原則
+		checkBall->vel *= 0.98f;
 	}
 }
 
 GameScene::GameScene()
 {
+	const float massA = 4.0f;
+	const float radiusA = 48.0f;
+	const float massB = 3.0f;
+	const float radiusB = 32.0f;
 
+	const float offsetX = 200.0f;
+	const auto winCenter = WinApp::Instance()->GetExpandWinCenter();
+
+
+	balls[0] = std::make_shared<Ball>(winCenter + Vec2<float>(0.0f, 0.0f), massA, radiusA);
+	balls[1] = std::make_shared<Ball>(winCenter + Vec2<float>(-offsetX, 0.0f), massB, radiusB);
+	balls[2] = std::make_shared<Ball>(winCenter + Vec2<float>(offsetX, 0.0f), massB, radiusB);
 }
 
 void GameScene::OnInitialize()
 {
-	pos = WinApp::Instance()->GetExpandWinCenter();
-
-	vel = { 0,0 };
-	accel = { 0,0 };
-
-	for (auto& p : particles)
+	for (auto& b : balls)
 	{
-		p.Init();
+		b->Init();
 	}
 }
 
 #include"KuroMath.h"
 void GameScene::OnUpdate()
 {
-	static const float GRAVITY = 0.1f;
-	static const float MAX_ACCEL_Y = 5.0f;
-	static const float AIR_FRICTION = 0.99f;
+	static const float REBOUND_E = 0.8f;	//壁との反発係数
+	static const float VEL_BASE_DIST = 10.0f;	//速さの基準となる距離
 
-	//パーティクル更新
-	for (auto& p : particles)
-	{
-		if (!p.life)continue;
-
-		//空気抵抗X
-		p.accel.x *= AIR_FRICTION * 0.9f;
-
-		//重力
-		p.accel.y += GRAVITY;
-
-		//最大落下加速度
-		if (MAX_ACCEL_Y < p.accel.y)p.accel.y = MAX_ACCEL_Y;
-
-		p.vel += p.accel;
-		//速度の減衰
-		p.vel = KuroMath::Lerp(p.vel, { 0,0 }, 0.3f);
-
-		p.pos += p.vel;
-
-		p.life--;
-	}
-
-	//プレイヤー入力と更新
-	bool up = UsersInput::Instance()->KeyInput(DIK_W);
-	bool down = UsersInput::Instance()->KeyInput(DIK_S);
-	bool left = UsersInput::Instance()->KeyInput(DIK_A);
-	bool right = UsersInput::Instance()->KeyInput(DIK_D);
-	float skewRate = cos(Angle::ConvertToRadian(45));
-
-	static const float ACCEL = 0.5f;
-	//地面との摩擦
-	const float groundFrictionRate = onGround ? 1.0f : 0.08f;
-	if (left)
-	{
-		accel.x -= ACCEL * groundFrictionRate * ((up || down) ? skewRate : 1.0f);
-
-		if (onGround)
-		{
-			EmitParticles(1, { pos.x,pos.y + RADIUS }, Vec2<float>(1.0f, -1.0f), Angle(45));
-		}
-	}
-	if (right)
-	{
-		accel.x += ACCEL * groundFrictionRate * ((up || down) ? skewRate : 1.0f);
-
-		if (onGround)
-		{
-			EmitParticles(1, { pos.x,pos.y + RADIUS }, Vec2<float>(-1.0f, -1.0f), Angle(45));
-		}
-	}
-
-	//重力
-	accel.y += GRAVITY;
-
-	//最大重力加速度制限（空気抵抗Y）
-	if (MAX_ACCEL_Y < accel.y)
-	{
-		accel.y = MAX_ACCEL_Y;
-	}
-
-	//ジャンプ（空中ジャンプ可）
-	static const float JUMP_POWER = -2.5f;
-	if (UsersInput::Instance()->KeyOnTrigger(DIK_SPACE))
-	{
-		accel.y = JUMP_POWER;
-	}
-
-	//速度加算
-	vel += accel;
-	pos += vel;
-
-	//速度の減衰
-	vel = KuroMath::Lerp(vel, { 0,0 }, 0.3f);
-
-	//画面外に出ないよう制限
+	const auto mousePos = UsersInput::Instance()->GetMousePos();
 	const auto winSize = WinApp::Instance()->GetExpandWinSize();
-	static const auto REFLECT_RATE = -0.8f;
 
-	//壁との摩擦
-	static const float WALL_FRICTION_RATE = 0.8f;
-	bool wallHit = false;
-
-	//右
-	if (winSize.x < pos.x + RADIUS)
+	for (auto& b : balls)
 	{
-		pos.x = winSize.x - RADIUS;
-		accel.x = 0.0f;
-		accel.y *= WALL_FRICTION_RATE;	//摩擦
-		vel.x *= REFLECT_RATE;
-		wallHit = true;
-		EmitParticles(1, { pos.x + RADIUS,pos.y }, Vec2<float>(-1.0f, -1.0f), Angle(45));
-	}
-	//左
-	if (pos.x - RADIUS < 0.0f)
-	{
-		pos.x = RADIUS;
-		accel.x = 0.0f;
-		accel.y *= WALL_FRICTION_RATE;	//摩擦
-		vel.x *= REFLECT_RATE;
-		wallHit = true;
-		EmitParticles(1, { pos.x - RADIUS,pos.y }, Vec2<float>(1.0f, -1.0f), Angle(45));
-	}
-	//下
-	if (winSize.y < pos.y + RADIUS)
-	{
-		pos.y = winSize.y - RADIUS;
-		accel.y = 0.0f;
-		accel.x *= WALL_FRICTION_RATE;	//摩擦
-		vel.y *= REFLECT_RATE;
-		if (!onGround)
+		if (!b->hold)
 		{
-			EmitParticles(1, { pos.x,pos.y + RADIUS }, Vec2<float>(0.0f, -1.0f), Angle(45));
+			CheckHitBallUpdate(b);
 		}
-		onGround = true;
-		wallHit = true;
-	}
-	else onGround = false;
-	//上
-	if (pos.y - RADIUS < 0.0f)
-	{
-		pos.y = RADIUS;
-		accel.y = 0.0f;
-		accel.x *= WALL_FRICTION_RATE;	//摩擦
-		vel.y *= REFLECT_RATE;
-		wallHit = true;
-		EmitParticles(1, { pos.x,pos.y - RADIUS }, Vec2<float>(0.0f, 1.0f), Angle(45));
+
+		//左画面端
+		if (b->pos.x - b->radius < 0.0f)
+		{
+			b->pos.x = b->radius;
+			b->vel.x *= -REBOUND_E;
+		}
+		//右画面端
+		else if (winSize.x < b->pos.x + b->radius)
+		{
+			b->pos.x = winSize.x - b->radius;
+			b->vel.x *= -REBOUND_E;
+		}
+		//上画面端
+		if (b->pos.y - b->radius < 0.0f)
+		{
+			b->pos.y = b->radius;
+			b->vel.y *= -REBOUND_E;
+		}
+		//下画面端
+		else if (winSize.y < b->pos.y + b->radius)
+		{
+			b->pos.y = winSize.y - b->radius;
+			b->vel.y *= -REBOUND_E;
+		}
 	}
 
-	//空気抵抗X
-	if (!wallHit)
+	if (UsersInput::Instance()->MouseOnTrigger(MOUSE_BUTTON::LEFT))
 	{
-		accel.x *= AIR_FRICTION;
+		holdBall = CheckHitMousePoint();
 	}
+
+	if (auto b = holdBall.lock())
+	{
+		if (UsersInput::Instance()->MouseOffTrigger(MOUSE_BUTTON::LEFT))
+		{
+			b->vel = -(mousePos - b->pos).GetNormal() * mousePos.Distance(b->pos) / VEL_BASE_DIST;
+
+			b->hold = false;
+			holdBall.reset();
+		}
+
+		//最初に計算
+		CheckHitBallUpdate(b);
+	}
+
+	if (UsersInput::Instance()->KeyOnTrigger(DIK_I))
+	{
+		this->Initialize();
+	}
+
+
+
+	
 }
 
 #include"DrawFunc2D.h"
@@ -183,29 +195,19 @@ void GameScene::OnDraw()
 {
 	KuroEngine::Instance().Graphics().SetRenderTargets({ D3D12App::Instance()->GetBackBuffRenderTarget() });
 
-	for (auto& p : particles)
+	for (auto& b : balls)
 	{
-		if (!p.life)continue;
-
-		static const float MAX_SIZE = 10.0f;
-		const float lifeRate = (p.lifeSpan - p.life) / (float)p.lifeSpan;
-		const float size = KuroMath::Ease(In, Circ, lifeRate, MAX_SIZE, 0.0f);
-		const Vec2<float>leftUpPos = p.pos - Vec2<float>(size, size);
-		const Vec2<float>rightBottomPos = p.pos + Vec2<float>(size, size);
-		DrawFunc2D::DrawBox2D(leftUpPos, rightBottomPos, Color(1.0f, 1.0f, 1.0f, 1.0f - lifeRate), true, AlphaBlendMode_Trans);
+		DrawFunc2D::DrawCircle2D(b->pos, b->radius, b->hold ? Color(1.0f, 0.0f, 0.0f, 1.0f) : Color(), true);
 	}
 
-	DrawFunc2D::DrawCircle2D(pos, RADIUS, Color(), true);
+	if (auto b = holdBall.lock())
+	{
+		DrawFunc2D::DrawLine2D(b->pos, UsersInput::Instance()->GetMousePos(), Color(1.0f, 0.0f, 0.0f, 1.0f));
+	}
 }
 
 void GameScene::OnImguiDebug()
 {
-	ImGui::Begin("Parameters");
-
-	ImGui::Text("Move - AD");
-	ImGui::Text("Space - Jump");
-
-	ImGui::End();
 }
 
 void GameScene::OnFinalize()

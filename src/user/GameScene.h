@@ -2,42 +2,31 @@
 #include"KuroEngine.h"
 #include"LightManager.h"
 #include<memory>
-#include<array>
 
 class GameScene : public BaseScene
 {
-	struct Particle
+	struct Ball
 	{
+		const Vec2<float>initPos;
 		Vec2<float>pos;
 		Vec2<float>vel;
-		Vec2<float>accel;
-		int life;
-		int lifeSpan;
-		void Init() { life = 0; }
-		void Emit(const Vec2<float>& EmitPos, const Vec2<float>& EmitVec)
+		const float mass;
+		const float radius;
+		bool hold;
+		Ball(const Vec2<float>& Pos, const float& Mass,const float& Radius) :initPos(Pos), mass(Mass),radius(Radius) { Init(); }
+		void Init()
 		{
-			pos = EmitPos;
+			pos = initPos;
 			vel = { 0,0 };
-			static const float POWER_MAX = 3.0f;
-			static const float POWER_MIN = 1.0f;
-			accel = EmitVec * KuroFunc::GetRand(POWER_MIN, POWER_MAX);
-			static const int LIFE_MAX = 30;
-			static const int LIFE_MIN = 8;
-			lifeSpan = KuroFunc::GetRand(LIFE_MIN, LIFE_MAX);
-			life = lifeSpan;
+			hold = false;
 		}
 	};
-	static const int PARTICLE_MAX = 100;
-	std::array<Particle, PARTICLE_MAX>particles;
+	static const int BALL_NUM = 3;
+	std::array<std::shared_ptr<Ball>, BALL_NUM>balls;
 
-	Vec2<float>pos;
-	Vec2<float>vel;
-
-	Vec2<float>accel;
-
-	bool onGround = false;
-
-	void EmitParticles(const int& Num, const Vec2<float>& EmitPos, const Vec2<float>& EmitVec, const Angle& RandAngle);
+	std::shared_ptr<Ball>CheckHitMousePoint();
+	void CheckHitBallUpdate(std::weak_ptr<Ball>CheckBall);
+	std::weak_ptr<Ball>holdBall;
 
 public:
 	GameScene();

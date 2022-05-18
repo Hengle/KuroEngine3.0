@@ -43,6 +43,7 @@ struct Vec2
 		auto me = Float();
 		return me.x * rhs.y - me.y * rhs.x;
 	}
+	bool IsZero()const { return x == 0 && y == 0; }
 
 #pragma region オペレーター演算子
 	Vec2 operator-() const {
