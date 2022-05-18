@@ -193,9 +193,9 @@ float3 BRDF(float3 LigDirection, float3 LigColor, float3 WorldNormal, float3 Wor
 PSOutput PSmain(VSOutput input) : SV_TARGET
 {
     float3 normal = input.normal;
-    float3 localNormal = normalMap.Sample(smp, input.uv).xyz;
-    localNormal = (localNormal - 0.5f) * 2.0f; //タンジェントスペースの法線を0～1の範囲から-1～1の範囲に復元する
-    normal = input.tangent * localNormal.x + input.biNormal * localNormal.y + normal * localNormal.z;
+    //float3 localNormal = normalMap.Sample(smp, input.uv).xyz;
+    //localNormal = (localNormal - 0.5f) * 2.0f; //タンジェントスペースの法線を0～1の範囲から-1～1の範囲に復元する
+    //normal = input.tangent * localNormal.x + input.biNormal * localNormal.y + normal * localNormal.z;
     
     s_baseColor = material.baseColor + baseTex.Sample(smp, input.uv).rgb;
     s_metalness = material.metalness + metalnessTex.Sample(smp, input.uv).r;
