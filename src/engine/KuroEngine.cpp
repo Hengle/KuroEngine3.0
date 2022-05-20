@@ -29,8 +29,6 @@ void BaseScene::Finalize()
 
 void KuroEngine::Render()
 {
-	d3d12App->SetViewPortsAndScissorRects(winApp->GetExpandWinSize());
-
 	scenes[nowScene]->Draw();
 
 	//ƒV[ƒ“‘JˆÚ•`‰æ

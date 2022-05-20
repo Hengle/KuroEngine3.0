@@ -21,7 +21,9 @@ static class DrawFunc3D
 	//DrawPBRShadingModel
 	static int DRAW_PBR_SHADING_COUNT;
 	//DrawToonModel
-	static int DRAW_TOON_COUNT;
+	static int DRAW_TOON_COUNT;	
+	//DrawShadowMapModel
+	static int DRAW_SHADOW_MAP_COUNT;
 
 public:
 	//呼び出しカウントリセット
@@ -32,6 +34,7 @@ public:
 		DRAW_ADS_SHADING_COUNT = 0;
 		DRAW_PBR_SHADING_COUNT = 0;
 		DRAW_TOON_COUNT = 0;
+		DRAW_SHADOW_MAP_COUNT = 0;
 	}
 
 	//線描画
@@ -64,4 +67,7 @@ public:
 		auto obj = ModelObject.lock();
 		DrawToonModel(ToonTex, LigManager, obj->model, obj->transform, Cam, BlendMode);
 	}
+
+	//シャドウマップに書き込み
+	static void DrawShadowMapModel(const std::weak_ptr<Model>Model, Transform& Transform, Camera& LightCam);
 };

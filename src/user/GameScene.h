@@ -20,6 +20,10 @@ class GameScene : public BaseScene
 	Light::Point ptLig;
 	Light::HemiSphere hemiLig;
 	Transform trans;
+
+	std::shared_ptr<RenderTarget>shadowMap;
+	std::shared_ptr<DepthStencil>shadowMapDepth;
+	Camera lightCamera;
 public:
 	GameScene();
 	void OnInitialize()override;

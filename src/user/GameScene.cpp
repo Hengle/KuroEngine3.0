@@ -2,11 +2,12 @@
 #include"KuroEngine.h"
 #include"Importer.h"
 #include"DrawFunc3D.h"
+#include"DrawFunc2D.h"
 #include"Camera.h"
 #include"Model.h"
 #include"Object.h"
 
-GameScene::GameScene()
+GameScene::GameScene() :lightCamera("LightCamera")
 {
 	skyDome = Importer::Instance()->LoadModel("resource/user/", "skydome.glb");
 	floor = Importer::Instance()->LoadModel("resource/user/", "floor.glb");
@@ -20,6 +21,14 @@ GameScene::GameScene()
 
 	//trans.SetRotate(Vec3<Angle>(-90, 0, 0));
 	//trans.SetScale(0.3f);
+
+	//シャドウマップ関連
+	shadowMap = D3D12App::Instance()->GenerateRenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM, Color(), { 1024,1024 }, L"ShadowMap");
+	shadowMapDepth = D3D12App::Instance()->GenerateDepthStencil({ 1024,1024 });
+	lightCamera.SetPos({ 0, 30, 0 });
+	lightCamera.SetTarget({ 0,0,0 });
+	lightCamera.SetUp({ 1,0,0 });
+	lightCamera.SetAngleOfView(Angle(20));
 }
 
 void GameScene::OnInitialize()
@@ -37,31 +46,51 @@ void GameScene::OnUpdate()
 	//ポイントライト位置
 	static const float UINT = 0.1f;
 	auto ptLigPos = ptLig.GetPos();
-	if (UsersInput::Instance()->KeyInput(DIK_W))
-	{
-		ptLigPos.y += UINT;
-	}
-	if (UsersInput::Instance()->KeyInput(DIK_S))
-	{
-		ptLigPos.y -= UINT;
-	}
-	if (UsersInput::Instance()->KeyInput(DIK_D))
+	if (UsersInput::Instance()->KeyInput(DIK_RIGHT))
 	{
 		ptLigPos.x += UINT;
 	}
-	if (UsersInput::Instance()->KeyInput(DIK_A))
+	if (UsersInput::Instance()->KeyInput(DIK_LEFT))
 	{
 		ptLigPos.x -= UINT;
 	}
-	if (UsersInput::Instance()->KeyInput(DIK_E))
+	if (UsersInput::Instance()->KeyInput(DIK_UP))
 	{
 		ptLigPos.z += UINT;
 	}
-	if (UsersInput::Instance()->KeyInput(DIK_Q))
+	if (UsersInput::Instance()->KeyInput(DIK_DOWN))
 	{
 		ptLigPos.z -= UINT;
 	}
 	ptLig.SetPos(ptLigPos);
+
+	//テストモデルの位置
+	auto modelPos = testModel->transform.GetPos();
+	if (UsersInput::Instance()->KeyInput(DIK_E))
+	{
+		modelPos.y += UINT;
+	}
+	if (UsersInput::Instance()->KeyInput(DIK_Q))
+	{
+		modelPos.y -= UINT;
+	}
+	if (UsersInput::Instance()->KeyInput(DIK_D))
+	{
+		modelPos.x += UINT;
+	}
+	if (UsersInput::Instance()->KeyInput(DIK_A))
+	{
+		modelPos.x -= UINT;
+	}
+	if (UsersInput::Instance()->KeyInput(DIK_W))
+	{
+		modelPos.z += UINT;
+	}
+	if (UsersInput::Instance()->KeyInput(DIK_S))
+	{
+		modelPos.z -= UINT;
+	}
+	testModel->transform.SetPos(modelPos);
 
 	//ライトのON/OFF
 	if (UsersInput::Instance()->KeyOnTrigger(DIK_1))
@@ -87,12 +116,19 @@ void GameScene::OnDraw()
 		D3D12App::Instance()->GetBackBuffRenderTarget()->GetGraphSize());
 
 	dsv->Clear(D3D12App::Instance()->GetCmdList());
+	shadowMap->Clear(D3D12App::Instance()->GetCmdList());
+	shadowMapDepth->Clear(D3D12App::Instance()->GetCmdList());
 
+	//シャドウマップ書き込み
+	KuroEngine::Instance().Graphics().SetRenderTargets({ shadowMap }, shadowMapDepth);
+	DrawFunc3D::DrawShadowMapModel(testModel->model, testModel->transform, debugCam);
+
+	//標準描画
 	KuroEngine::Instance().Graphics().SetRenderTargets({ D3D12App::Instance()->GetBackBuffRenderTarget() }, dsv);
-
 	DrawFunc3D::DrawNonShadingModel(skyDome, trans, debugCam);
 	DrawFunc3D::DrawADSShadingModel(ligMgr, floor, trans, debugCam);
 	DrawFunc3D::DrawADSShadingModel(ligMgr, testModel, debugCam);
+	DrawFunc2D::DrawExtendGraph2D({ 0,0 }, { 256,256 }, shadowMap);
 }
 
 void GameScene::OnImguiDebug()

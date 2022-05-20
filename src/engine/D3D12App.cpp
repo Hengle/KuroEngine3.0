@@ -1274,15 +1274,6 @@ std::shared_ptr<ComputePipeline> D3D12App::GenerateComputePipeline(const ComPtr<
 	return std::make_shared<ComputePipeline>(pipeline, rootSignature);
 }
 
-void D3D12App::SetViewPortsAndScissorRects(const Vec2<float>& Size)
-{
-	//ビューポート設定
-	commandList->RSSetViewports(1, &CD3DX12_VIEWPORT(0.0f, 0.0f, Size.x, Size.y));
-
-	//シザー矩形設定
-	commandList->RSSetScissorRects(1, &CD3DX12_RECT(0, 0, Size.x, Size.y));
-}
-
 void D3D12App::SetBackBufferRenderTarget()
 {
 	swapchain->GetBackBufferRenderTarget()->ChangeBarrier(commandList, D3D12_RESOURCE_STATE_RENDER_TARGET);

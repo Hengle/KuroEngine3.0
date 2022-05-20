@@ -8,6 +8,13 @@ void GraphicsManager::SetRenderTargetsCommand::Excute(const ComPtr<ID3D12Graphic
 		rtvs.emplace_back(ptr.lock()->AsRTV(CmdList));
 	}
 
+	const auto targetSize = renderTargets[0].lock()->GetGraphSize();
+	//ビューポート設定
+	CmdList->RSSetViewports(1, &CD3DX12_VIEWPORT(0.0f, 0.0f, targetSize.x, targetSize.y));
+
+	//シザー矩形設定
+	CmdList->RSSetScissorRects(1, &CD3DX12_RECT(0, 0, targetSize.x, targetSize.y));
+
 	//デプスステンシルがある場合
 	if (auto ptr = depthStencil.lock())
 	{

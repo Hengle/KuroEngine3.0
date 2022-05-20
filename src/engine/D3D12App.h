@@ -169,8 +169,6 @@ public:
 		const std::vector<RootParam>& RootParams,
 		const WrappedSampler& Sampler);
 
-	//ビューポートとシザーのセット
-	void SetViewPortsAndScissorRects(const Vec2<float>& Size);
 	//バックバッファレンダーターゲットをセット
 	void SetBackBufferRenderTarget();
 
