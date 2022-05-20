@@ -9,18 +9,8 @@ class Model;
 
 class GameScene : public BaseScene
 {
-	const enum MODEL
-	{
-		MONKEY_GLB,
-		DRAGON_FBX,
-		PLAYER_GLB,
-		METAL_BALL_FBX,
-		WOOD_CUBE_FBX,
-		MODEL_NUM,
-		DEFAULT = WOOD_CUBE_FBX
-	};
-	MODEL nowModel = DEFAULT;
-	std::array<std::shared_ptr<Model>, MODEL_NUM>models;
+	std::shared_ptr<Model>skyDome;
+	std::shared_ptr<Model>floor;
 
 	DebugCamera debugCam;
 	LightManager ligMgr;
