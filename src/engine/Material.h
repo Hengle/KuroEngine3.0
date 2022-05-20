@@ -2,6 +2,7 @@
 #include"Vec.h"
 #include<string>
 #include<memory>
+#include<array>
 
 class ConstantBuffer;
 class TextureBuffer;
@@ -53,7 +54,7 @@ public:
 	}constData;
 	std::shared_ptr<ConstantBuffer>buff;
 
-	std::shared_ptr<TextureBuffer> texBuff[MATERIAL_TEX_TYPE_NUM];
+	std::array<std::shared_ptr<TextureBuffer>, MATERIAL_TEX_TYPE_NUM> texBuff;
 
 	Material();
 	void CreateBuff();

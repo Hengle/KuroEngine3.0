@@ -963,7 +963,7 @@ std::shared_ptr<GraphicsPipeline>D3D12App::GenerateGraphicsPipeline(
 	const std::vector<InputLayoutParam>& InputLayout,
 	const std::vector<RootParam>& RootParams,
 	const std::vector<RenderTargetInfo>& RenderTargetFormat,
-	const std::vector<D3D12_STATIC_SAMPLER_DESC>& Samplers)
+	std::vector<D3D12_STATIC_SAMPLER_DESC> Samplers)
 {
 	HRESULT hr;
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
@@ -1047,6 +1047,10 @@ std::shared_ptr<GraphicsPipeline>D3D12App::GenerateGraphicsPipeline(
 			rootParameters.back().InitAsDescriptorTable(1, &rangeArray[i]);
 		}
 
+		for (int i = 0; i < Samplers.size(); ++i)
+		{
+			Samplers[i].ShaderRegister = i;
+		}
 		// ルートシグネチャの設定
 		CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
 		rootSignatureDesc.Init_1_0(rootParameters.size(), rootParameters.data(), Samplers.size(), Samplers.data(), D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
@@ -1166,7 +1170,7 @@ std::shared_ptr<GraphicsPipeline>D3D12App::GenerateGraphicsPipeline(
 	return std::make_shared<GraphicsPipeline>(pipeline, rootSignature, Option.primitiveTopology);
 }
 
-std::shared_ptr<ComputePipeline> D3D12App::GenerateComputePipeline(const ComPtr<ID3DBlob>& ComputeShader, const std::vector<RootParam>& RootParams, const std::vector<D3D12_STATIC_SAMPLER_DESC>& Samplers)
+std::shared_ptr<ComputePipeline> D3D12App::GenerateComputePipeline(const ComPtr<ID3DBlob>& ComputeShader, const std::vector<RootParam>& RootParams, std::vector<D3D12_STATIC_SAMPLER_DESC> Samplers)
 {
 	HRESULT hr;
 
@@ -1229,6 +1233,11 @@ std::shared_ptr<ComputePipeline> D3D12App::GenerateComputePipeline(const ComPtr<
 		{
 			rootParameters.emplace_back();
 			rootParameters.back().InitAsDescriptorTable(1, &rangeArray[i]);
+		}
+
+		for (int i = 0; i < Samplers.size(); ++i)
+		{
+			Samplers[i].ShaderRegister = i;
 		}
 
 		// ルートシグネチャの設定

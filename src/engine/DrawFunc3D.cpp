@@ -471,8 +471,14 @@ void DrawFunc3D::DrawShadowFallModel(const std::weak_ptr<TextureBuffer> ShadowMa
 
 		//レンダーターゲット描画先情報
 		std::vector<RenderTargetInfo>RENDER_TARGET_INFO = { RenderTargetInfo(D3D12App::Instance()->GetBackBuffFormat(), BlendMode) };
+
+		//シャドウマップサンプリング用サンプラー
+		auto shadowMapSampler = WrappedSampler(false, false);
+		shadowMapSampler.sampler.Filter = D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
+		shadowMapSampler.sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_GREATER;
+		shadowMapSampler.sampler.MaxAnisotropy = 1;
 		//パイプライン生成
-		PIPELINE[BlendMode] = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, ModelMesh::Vertex_Model::GetInputLayout(), ROOT_PARAMETER, RENDER_TARGET_INFO, {WrappedSampler(false, false)});
+		PIPELINE[BlendMode] = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, ModelMesh::Vertex_Model::GetInputLayout(), ROOT_PARAMETER, RENDER_TARGET_INFO, { WrappedSampler(false, false),shadowMapSampler });
 	}
 
 	KuroEngine::Instance().Graphics().SetPipeline(PIPELINE[BlendMode]);

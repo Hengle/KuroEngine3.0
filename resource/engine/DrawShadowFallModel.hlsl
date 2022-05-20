@@ -19,6 +19,7 @@ cbuffer cbuff2 : register(b2)
 Texture2D<float4> tex : register(t0);
 Texture2D<float4> shadowMap : register(t1);
 SamplerState smp : register(s0);
+SamplerComparisonState shadowMapSmp : register(s1);
 
 struct VSOutput
 {
@@ -100,8 +101,17 @@ float4 PSmain(VSOutput input) : SV_TARGET
         float zInShadowMap = shadowMap.Sample(smp, shadowMapUV).r;
         if (zInLVP > zInShadowMap)
         {
-            // 遮蔽されている
-            color.xyz *= 0.5f;
+          //遮蔽率の計算（比較するZ値より大きければ1.0,小さければ0.0。それを４テクセル分行い平均を返す）
+            float shadow = shadowMap.SampleCmpLevelZero(
+            shadowMapSmp, //使用するサンプラー
+            shadowMapUV, //シャドウマップUV
+            zInLVP); //比較するZ値
+        
+          //シャドウカラーを計算
+            float3 shadowColor = color.xyz * 0.5f;
+        
+        //遮蔽率を使って線形補間
+            color.xyz = lerp(color.xyz, shadowColor, shadow);
         }
     }
     

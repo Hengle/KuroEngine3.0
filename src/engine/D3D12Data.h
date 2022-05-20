@@ -540,7 +540,7 @@ public:
 		auto interpolation = Interpolation ? D3D12_FILTER_MIN_MAG_MIP_LINEAR : D3D12_FILTER_MIN_MAG_MIP_POINT;
 		Generate(addressMode, interpolation);
 	}
-	operator D3D12_STATIC_SAMPLER_DESC()const { return sampler; }
+	operator D3D12_STATIC_SAMPLER_DESC() { return sampler; }
 };
 
 //パイプライン各種設定

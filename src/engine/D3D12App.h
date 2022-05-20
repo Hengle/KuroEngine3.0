@@ -160,13 +160,13 @@ public:
 		const std::vector<InputLayoutParam>& InputLayout,
 		const std::vector<RootParam>& RootParams,
 		const std::vector<RenderTargetInfo>& RenderTargetFormat,
-		const std::vector<D3D12_STATIC_SAMPLER_DESC>& Samplers);
+		std::vector<D3D12_STATIC_SAMPLER_DESC> Samplers);
 
 	//コンピュートパイプライン生成
 	std::shared_ptr<ComputePipeline>GenerateComputePipeline(
 		const ComPtr<ID3DBlob>& ComputeShader,
 		const std::vector<RootParam>& RootParams,
-		const std::vector<D3D12_STATIC_SAMPLER_DESC>& Samplers);
+		std::vector<D3D12_STATIC_SAMPLER_DESC> Samplers);
 
 	//バックバッファレンダーターゲットをセット
 	void SetBackBufferRenderTarget();
