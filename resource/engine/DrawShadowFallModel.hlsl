@@ -87,17 +87,24 @@ float4 PSmain(VSOutput input) : SV_TARGET
     float2 shadowMapUV = input.posInLVP.xy / input.posInLVP.w;
     shadowMapUV *= float2(0.5f, -0.5f);
     shadowMapUV += 0.5f;
+    
+    //ライトビュースクリーン空間でのZ値を計算する
+    float zInLVP = input.posInLVP.z / input.posInLVP.w;
 
-    //UV座標を使ってシャドウマップから影情報をサンプリング
-    float3 shadowMapColor = 1.0f;
+    float4 color = tex.Sample(smp, input.uv);
+    
     if (shadowMapUV.x > 0.0f && shadowMapUV.x < 1.0f
         && shadowMapUV.y > 0.0f && shadowMapUV.y < 1.0f)
     {
-        shadowMapColor = shadowMap.Sample(smp, shadowMapUV);
+        // 計算したUV座標を使って、シャドウマップから深度値をサンプリング
+        float zInShadowMap = shadowMap.Sample(smp, shadowMapUV).r;
+        if (zInLVP > zInShadowMap)
+        {
+            // 遮蔽されている
+            color.xyz *= 0.5f;
+        }
     }
     
-    float4 color = tex.Sample(smp, input.uv);
-    color.xyz *= shadowMapColor;
     return color;
 }
 

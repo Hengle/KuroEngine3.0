@@ -23,12 +23,12 @@ GameScene::GameScene() :lightCamera("LightCamera")
 	//trans.SetScale(0.3f);
 
 	//シャドウマップ関連
-	shadowMap = D3D12App::Instance()->GenerateRenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM, Color(), { 1024,1024 }, L"ShadowMap");
+	shadowMap = D3D12App::Instance()->GenerateRenderTarget(DXGI_FORMAT_R32_FLOAT, Color(), { 1024,1024 }, L"ShadowMap");
 	shadowMapDepth = D3D12App::Instance()->GenerateDepthStencil({ 1024,1024 });
-	lightCamera.SetPos({ 0, 30, 0 });
+	lightCamera.SetPos({ 0, 10, 0 });
 	lightCamera.SetTarget({ 0,0,0 });
 	lightCamera.SetUp({ 1,0,0 });
-	lightCamera.SetAngleOfView(Angle(20));
+	lightCamera.SetAngleOfView(Angle(60));
 }
 
 void GameScene::OnInitialize()
@@ -129,7 +129,6 @@ void GameScene::OnDraw()
 	DrawFunc3D::DrawShadowFallModel(shadowMap, lightCamera, floor, trans, debugCam);
 	//DrawFunc3D::DrawADSShadingModel(ligMgr, floor, trans, debugCam);
 	DrawFunc3D::DrawADSShadingModel(ligMgr, testModel, debugCam);
-	DrawFunc2D::DrawExtendGraph2D({ 0,0 }, { 256,256 }, shadowMap);
 }
 
 void GameScene::OnImguiDebug()

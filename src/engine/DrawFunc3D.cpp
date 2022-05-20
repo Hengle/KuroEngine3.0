@@ -409,7 +409,7 @@ void DrawFunc3D::DrawShadowMapModel(const std::weak_ptr<Model>Model, Transform& 
 		};
 
 		//レンダーターゲット描画先情報
-		std::vector<RenderTargetInfo>RENDER_TARGET_INFO = { RenderTargetInfo(D3D12App::Instance()->GetBackBuffFormat(), AlphaBlendMode_None) };
+		std::vector<RenderTargetInfo>RENDER_TARGET_INFO = { RenderTargetInfo(DXGI_FORMAT_R32_FLOAT, AlphaBlendMode_None) };
 		//パイプライン生成
 		PIPELINE = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, ModelMesh::Vertex_Model::GetInputLayout(), ROOT_PARAMETER, RENDER_TARGET_INFO, WrappedSampler(false, false));
 	}
