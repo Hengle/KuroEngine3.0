@@ -121,12 +121,13 @@ void GameScene::OnDraw()
 
 	//シャドウマップ書き込み
 	KuroEngine::Instance().Graphics().SetRenderTargets({ shadowMap }, shadowMapDepth);
-	DrawFunc3D::DrawShadowMapModel(testModel->model, testModel->transform, debugCam);
+	DrawFunc3D::DrawShadowMapModel(testModel->model, testModel->transform, lightCamera);
 
 	//標準描画
 	KuroEngine::Instance().Graphics().SetRenderTargets({ D3D12App::Instance()->GetBackBuffRenderTarget() }, dsv);
 	DrawFunc3D::DrawNonShadingModel(skyDome, trans, debugCam);
-	DrawFunc3D::DrawADSShadingModel(ligMgr, floor, trans, debugCam);
+	DrawFunc3D::DrawShadowFallModel(shadowMap, lightCamera, floor, trans, debugCam);
+	//DrawFunc3D::DrawADSShadingModel(ligMgr, floor, trans, debugCam);
 	DrawFunc3D::DrawADSShadingModel(ligMgr, testModel, debugCam);
 	DrawFunc2D::DrawExtendGraph2D({ 0,0 }, { 256,256 }, shadowMap);
 }
