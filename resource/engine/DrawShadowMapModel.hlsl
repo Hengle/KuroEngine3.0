@@ -3,7 +3,7 @@
 
 cbuffer cbuff0 : register(b0)
 {
-    Camera cam;
+    Camera lightCamera;
 }
 
 cbuffer cbuff1 : register(b1)
@@ -14,6 +14,7 @@ cbuffer cbuff1 : register(b1)
 struct VSOutput
 {
     float4 svpos : SV_POSITION;
+    float2 depth : TEXCOORD1;
 };
 
 VSOutput VSmain(Vertex input)
@@ -57,14 +58,19 @@ VSOutput VSmain(Vertex input)
  //   }
 	
     VSOutput output;
-    output.svpos = mul(cam.proj, mul(cam.view, mul(world, resultPos)));
+    float4 worldPos = mul(world, resultPos);
+    output.svpos = mul(lightCamera.proj, mul(lightCamera.view, worldPos));
+    
+    //ライトから見た深度値（深度値最大1000) とその２乗
+    output.depth.x = length(worldPos.xyz - lightCamera.eyePos) / 1000.0f;
+    output.depth.y = output.depth.x * output.depth.x;
     return output;
 }
 
 
 float4 PSmain(VSOutput input) : SV_TARGET
 {
-    return float4(input.svpos.z, input.svpos.z, input.svpos.z, 1.0f);
+    return float4(input.depth.x, input.depth.y, 0.0f, 1.0f);
 }
 
 float4 main(float4 pos : POSITION) : SV_POSITION

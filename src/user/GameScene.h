@@ -7,6 +7,7 @@
 
 class Model;
 class ModelObject;
+class GaussianBlur;
 
 class GameScene : public BaseScene
 {
@@ -24,6 +25,7 @@ class GameScene : public BaseScene
 	std::shared_ptr<RenderTarget>shadowMap;
 	std::shared_ptr<DepthStencil>shadowMapDepth;
 	Camera lightCamera;
+	std::shared_ptr<GaussianBlur> gaussianBlur;
 public:
 	GameScene();
 	void OnInitialize()override;
