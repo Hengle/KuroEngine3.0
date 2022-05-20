@@ -67,7 +67,7 @@ void DrawFunc2D_Color::DrawExtendGraph2D(const Vec2<float>& LeftUpPos, const Vec
 		//レンダーターゲット描画先情報
 		std::vector<RenderTargetInfo>RENDER_TARGET_INFO = { RenderTargetInfo(D3D12App::Instance()->GetBackBuffFormat(), AlphaBlendMode_Trans) };
 		//パイプライン生成
-		EXTEND_GRAPH_PIPELINE = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, INPUT_LAYOUT, ROOT_PARAMETER, RENDER_TARGET_INFO, WrappedSampler(true, false));
+		EXTEND_GRAPH_PIPELINE = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, INPUT_LAYOUT, ROOT_PARAMETER, RENDER_TARGET_INFO, { WrappedSampler(true, false) });
 	}
 
 	KuroEngine::Instance().Graphics().SetPipeline(EXTEND_GRAPH_PIPELINE);
@@ -142,7 +142,7 @@ void DrawFunc2D_Color::DrawRotaGraph2D(const Vec2<float>& Center, const Vec2<flo
 		//レンダーターゲット描画先情報
 		std::vector<RenderTargetInfo>RENDER_TARGET_INFO = { RenderTargetInfo(D3D12App::Instance()->GetBackBuffFormat(), AlphaBlendMode_Trans) };
 		//パイプライン生成
-		ROTA_GRAPH_PIPELINE = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, INPUT_LAYOUT, ROOT_PARAMETER, RENDER_TARGET_INFO, WrappedSampler(true, false));
+		ROTA_GRAPH_PIPELINE = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, INPUT_LAYOUT, ROOT_PARAMETER, RENDER_TARGET_INFO, { WrappedSampler(true, false) });
 	}
 
 	KuroEngine::Instance().Graphics().SetPipeline(ROTA_GRAPH_PIPELINE);

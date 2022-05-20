@@ -107,7 +107,7 @@ void DrawFunc2D_Shadow::DrawExtendGraph2D(LightManager& LigManager, const Vec2<f
 		};
 
 		//パイプライン生成
-		EXTEND_GRAPH_PIPELINE = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, INPUT_LAYOUT, ROOT_PARAMETER, RENDER_TARGET_INFO, WrappedSampler(false, true));
+		EXTEND_GRAPH_PIPELINE = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, INPUT_LAYOUT, ROOT_PARAMETER, RENDER_TARGET_INFO, { WrappedSampler(false, true) });
 	}
 
 	StaticInit();
@@ -203,7 +203,7 @@ void DrawFunc2D_Shadow::DrawRotaGraph2D(LightManager& LigManager, const Vec2<flo
 		};
 
 		//パイプライン生成
-		ROTA_GRAPH_PIPELINE = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, INPUT_LAYOUT, ROOT_PARAMETER, RENDER_TARGET_INFO,WrappedSampler(false,true));
+		ROTA_GRAPH_PIPELINE = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, INPUT_LAYOUT, ROOT_PARAMETER, RENDER_TARGET_INFO, { WrappedSampler(false,true) });
 	}
 
 	StaticInit();

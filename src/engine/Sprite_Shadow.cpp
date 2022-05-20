@@ -60,7 +60,7 @@ Sprite_Shadow::Sprite_Shadow(const std::shared_ptr<TextureBuffer>& Texture, cons
 		};
 
 		//パイプライン生成
-		PIPELINE_TRANS = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, INPUT_LAYOUT, ROOT_PARAMETER, RENDER_TARGET_INFO, WrappedSampler(false, true));
+		PIPELINE_TRANS = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, INPUT_LAYOUT, ROOT_PARAMETER, RENDER_TARGET_INFO, { WrappedSampler(false, true) });
 
 		//視点座標
 		Vec3<float>INIT_EYE_POS = { WinApp::Instance()->GetExpandWinCenter().x,WinApp::Instance()->GetExpandWinCenter().y,-5.0f };

@@ -67,7 +67,7 @@ void DrawFunc3D::DrawLine(Camera& Cam, const Vec3<float>& From, const Vec3<float
 		//レンダーターゲット描画先情報
 		std::vector<RenderTargetInfo>RENDER_TARGET_INFO = { RenderTargetInfo(D3D12App::Instance()->GetBackBuffFormat(), BlendMode) };
 		//パイプライン生成
-		PIPELINE[BlendMode] = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, INPUT_LAYOUT, ROOT_PARAMETER, RENDER_TARGET_INFO, WrappedSampler(false, false));
+		PIPELINE[BlendMode] = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, INPUT_LAYOUT, ROOT_PARAMETER, RENDER_TARGET_INFO, {WrappedSampler(false, false)});
 	}
 
 	KuroEngine::Instance().Graphics().SetPipeline(PIPELINE[BlendMode]);
@@ -120,7 +120,7 @@ void DrawFunc3D::DrawNonShadingModel(const std::weak_ptr<Model> Model, Transform
 		//レンダーターゲット描画先情報
 		std::vector<RenderTargetInfo>RENDER_TARGET_INFO = { RenderTargetInfo(D3D12App::Instance()->GetBackBuffFormat(), BlendMode) };
 		//パイプライン生成
-		PIPELINE[BlendMode] = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, ModelMesh::Vertex_Model::GetInputLayout(), ROOT_PARAMETER, RENDER_TARGET_INFO, WrappedSampler(false, false));
+		PIPELINE[BlendMode] = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, ModelMesh::Vertex_Model::GetInputLayout(), ROOT_PARAMETER, RENDER_TARGET_INFO, {WrappedSampler(false, false)});
 	}
 
 	KuroEngine::Instance().Graphics().SetPipeline(PIPELINE[BlendMode]);
@@ -188,7 +188,7 @@ void DrawFunc3D::DrawADSShadingModel(LightManager& LigManager, const std::weak_p
 		//レンダーターゲット描画先情報
 		std::vector<RenderTargetInfo>RENDER_TARGET_INFO = { RenderTargetInfo(D3D12App::Instance()->GetBackBuffFormat(), BlendMode) };
 		//パイプライン生成
-		PIPELINE[BlendMode] = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, ModelMesh::Vertex_Model::GetInputLayout(), ROOT_PARAMETER, RENDER_TARGET_INFO, WrappedSampler(false, false));
+		PIPELINE[BlendMode] = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, ModelMesh::Vertex_Model::GetInputLayout(), ROOT_PARAMETER, RENDER_TARGET_INFO, {WrappedSampler(false, false)});
 	}
 
 	KuroEngine::Instance().Graphics().SetPipeline(PIPELINE[BlendMode]);
@@ -265,7 +265,7 @@ void DrawFunc3D::DrawPBRShadingModel(LightManager& LigManager, const std::weak_p
 		//レンダーターゲット描画先情報
 		std::vector<RenderTargetInfo>RENDER_TARGET_INFO = { RenderTargetInfo(D3D12App::Instance()->GetBackBuffFormat(), BlendMode) };
 		//パイプライン生成
-		PIPELINE[BlendMode] = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, ModelMesh::Vertex_Model::GetInputLayout(), ROOT_PARAMETER, RENDER_TARGET_INFO, WrappedSampler(false, false));
+		PIPELINE[BlendMode] = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, ModelMesh::Vertex_Model::GetInputLayout(), ROOT_PARAMETER, RENDER_TARGET_INFO, {WrappedSampler(false, false)});
 	}
 
 	KuroEngine::Instance().Graphics().SetPipeline(PIPELINE[BlendMode]);
@@ -343,7 +343,7 @@ void DrawFunc3D::DrawToonModel(const std::weak_ptr<TextureBuffer> ToonTex, Light
 		//レンダーターゲット描画先情報
 		std::vector<RenderTargetInfo>RENDER_TARGET_INFO = { RenderTargetInfo(D3D12App::Instance()->GetBackBuffFormat(), BlendMode) };
 		//パイプライン生成
-		PIPELINE[BlendMode] = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, ModelMesh::Vertex_Model::GetInputLayout(), ROOT_PARAMETER, RENDER_TARGET_INFO, WrappedSampler(false, false));
+		PIPELINE[BlendMode] = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, ModelMesh::Vertex_Model::GetInputLayout(), ROOT_PARAMETER, RENDER_TARGET_INFO, {WrappedSampler(false, false)});
 	}
 
 	KuroEngine::Instance().Graphics().SetPipeline(PIPELINE[BlendMode]);
@@ -411,7 +411,7 @@ void DrawFunc3D::DrawShadowMapModel(const std::weak_ptr<Model>Model, Transform& 
 		//レンダーターゲット描画先情報
 		std::vector<RenderTargetInfo>RENDER_TARGET_INFO = { RenderTargetInfo(DXGI_FORMAT_R32_FLOAT, AlphaBlendMode_None) };
 		//パイプライン生成
-		PIPELINE = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, ModelMesh::Vertex_Model::GetInputLayout(), ROOT_PARAMETER, RENDER_TARGET_INFO, WrappedSampler(false, false));
+		PIPELINE = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, ModelMesh::Vertex_Model::GetInputLayout(), ROOT_PARAMETER, RENDER_TARGET_INFO, {WrappedSampler(false, false)});
 	}
 
 	KuroEngine::Instance().Graphics().SetPipeline(PIPELINE);
@@ -472,7 +472,7 @@ void DrawFunc3D::DrawShadowFallModel(const std::weak_ptr<TextureBuffer> ShadowMa
 		//レンダーターゲット描画先情報
 		std::vector<RenderTargetInfo>RENDER_TARGET_INFO = { RenderTargetInfo(D3D12App::Instance()->GetBackBuffFormat(), BlendMode) };
 		//パイプライン生成
-		PIPELINE[BlendMode] = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, ModelMesh::Vertex_Model::GetInputLayout(), ROOT_PARAMETER, RENDER_TARGET_INFO, WrappedSampler(false, false));
+		PIPELINE[BlendMode] = D3D12App::Instance()->GenerateGraphicsPipeline(PIPELINE_OPTION, SHADERS, ModelMesh::Vertex_Model::GetInputLayout(), ROOT_PARAMETER, RENDER_TARGET_INFO, {WrappedSampler(false, false)});
 	}
 
 	KuroEngine::Instance().Graphics().SetPipeline(PIPELINE[BlendMode]);

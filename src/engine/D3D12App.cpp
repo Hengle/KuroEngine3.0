@@ -210,7 +210,7 @@ void D3D12App::Initialize(const HWND& Hwnd, const Vec2<int>& ScreenSize, const b
 			RootParam(D3D12_DESCRIPTOR_RANGE_TYPE_CBV,"分割番号")
 		};
 		//パイプライン生成
-		splitImgPipeline = GenerateComputePipeline(cs, rootParams, WrappedSampler(true, false));
+		splitImgPipeline = GenerateComputePipeline(cs, rootParams, { WrappedSampler(true, false) });
 	}
 }
 
@@ -963,7 +963,7 @@ std::shared_ptr<GraphicsPipeline>D3D12App::GenerateGraphicsPipeline(
 	const std::vector<InputLayoutParam>& InputLayout,
 	const std::vector<RootParam>& RootParams,
 	const std::vector<RenderTargetInfo>& RenderTargetFormat,
-	const WrappedSampler& SamplerDesc)
+	const std::vector<D3D12_STATIC_SAMPLER_DESC>& Samplers)
 {
 	HRESULT hr;
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
@@ -1049,7 +1049,7 @@ std::shared_ptr<GraphicsPipeline>D3D12App::GenerateGraphicsPipeline(
 
 		// ルートシグネチャの設定
 		CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
-		rootSignatureDesc.Init_1_0(rootParameters.size(), &rootParameters[0], 1, &SamplerDesc.sampler, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+		rootSignatureDesc.Init_1_0(rootParameters.size(), rootParameters.data(), Samplers.size(), Samplers.data(), D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 		ComPtr<ID3DBlob> rootSigBlob;
 		ComPtr<ID3DBlob> errorBlob = nullptr;	//エラーオブジェクト
@@ -1166,7 +1166,7 @@ std::shared_ptr<GraphicsPipeline>D3D12App::GenerateGraphicsPipeline(
 	return std::make_shared<GraphicsPipeline>(pipeline, rootSignature, Option.primitiveTopology);
 }
 
-std::shared_ptr<ComputePipeline> D3D12App::GenerateComputePipeline(const ComPtr<ID3DBlob>& ComputeShader, const std::vector<RootParam>& RootParams, const WrappedSampler& Sampler)
+std::shared_ptr<ComputePipeline> D3D12App::GenerateComputePipeline(const ComPtr<ID3DBlob>& ComputeShader, const std::vector<RootParam>& RootParams, const std::vector<D3D12_STATIC_SAMPLER_DESC>& Samplers)
 {
 	HRESULT hr;
 
@@ -1233,7 +1233,7 @@ std::shared_ptr<ComputePipeline> D3D12App::GenerateComputePipeline(const ComPtr<
 
 		// ルートシグネチャの設定
 		CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
-		rootSignatureDesc.Init_1_0(rootParameters.size(), &rootParameters[0], 1, &Sampler.sampler, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+		rootSignatureDesc.Init_1_0(rootParameters.size(), rootParameters.data(), Samplers.size(), Samplers.data(), D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 		ComPtr<ID3DBlob> rootSigBlob;
 		ComPtr<ID3DBlob> errorBlob = nullptr;	//エラーオブジェクト
