@@ -89,11 +89,13 @@ class Importer : public Singleton<Importer>
 	const bool canLoadHSM = true;
 
 	Importer();
+
+	//※ ファイル名は拡張子つき
+	std::shared_ptr<Model> LoadFBXModel(const std::string& Dir, const std::string& FileName, const std::string& Ext);
+	std::shared_ptr<Model> LoadGLTFModel(const std::string& Dir, const std::string& FileName, const std::string& Ext);
 public:
 	~Importer() { FbxDeviceDestroy(); }
 
-	//※ ファイル名は拡張子つき
-	std::shared_ptr<Model> LoadFBXModel(const std::string& Dir, const std::string& FileName);
-	std::shared_ptr<Model> LoadGLTFModel(const std::string& Dir, const std::string& FileName);
+	std::shared_ptr<Model>LoadModel(const std::string& Dir, const std::string& FileName);
 };
 

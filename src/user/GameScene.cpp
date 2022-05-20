@@ -4,11 +4,14 @@
 #include"DrawFunc3D.h"
 #include"Camera.h"
 #include"Model.h"
+#include"Object.h"
 
 GameScene::GameScene()
 {
-	skyDome = Importer::Instance()->LoadGLTFModel("resource/user/", "skydome.glb");
-	floor = Importer::Instance()->LoadGLTFModel("resource/user/", "floor.glb");
+	skyDome = Importer::Instance()->LoadModel("resource/user/", "skydome.glb");
+	floor = Importer::Instance()->LoadModel("resource/user/", "floor.glb");
+	testModel = std::make_shared<ModelObject>("resource/user/", "player.glb");
+	testModel->transform.SetPos({ 0,1.5f,0 });
 
 	//dirLig.SetDir(Vec3<Angle>(50, -30, 0));
 	ligMgr.RegisterDirLight(&dirLig);
@@ -89,6 +92,7 @@ void GameScene::OnDraw()
 
 	DrawFunc3D::DrawNonShadingModel(skyDome, trans, debugCam);
 	DrawFunc3D::DrawADSShadingModel(ligMgr, floor, trans, debugCam);
+	DrawFunc3D::DrawADSShadingModel(ligMgr, testModel, debugCam);
 }
 
 void GameScene::OnImguiDebug()

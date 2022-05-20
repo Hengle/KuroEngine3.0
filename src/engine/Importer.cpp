@@ -1007,7 +1007,7 @@ Importer::Importer()
 	ErrorMessage(FUNC_NAME, fbxImporter == nullptr, "FBXインポータ生成に失敗\n");
 }
 
-std::shared_ptr<Model> Importer::LoadFBXModel(const std::string& Dir, const std::string& FileName)
+std::shared_ptr<Model> Importer::LoadFBXModel(const std::string& Dir, const std::string& FileName, const std::string& Ext)
 {
 	printf("glTFロード\nDir : %s , FileName : %s\n", Dir.c_str(), FileName.c_str());
 
@@ -1020,13 +1020,9 @@ std::shared_ptr<Model> Importer::LoadFBXModel(const std::string& Dir, const std:
 	result = CheckAlreadyExsit(Dir, FileName);
 	if (result)return result;	//生成していたらそれを返す
 
-	//拡張子取得
-	const auto ext = "." + KuroFunc::GetExtension(FileName);
-	ErrorMessage(FUNC_NAME, ext != ".fbx" && ext != ".FBX", "拡張子が合いません\n");
-
 	//モデル名取得(ファイル名から拡張子を除いたもの)
 	auto modelName = FileName;
-	modelName.erase(modelName.size() - ext.size());
+	modelName.erase(modelName.size() - Ext.size());
 
 	//ファイルパス
 	const auto path = Dir + FileName;
@@ -1183,7 +1179,7 @@ void Importer::LoadGLTFMaterial(const MATERIAL_TEX_TYPE& Type, std::weak_ptr<Mat
 }
 
 #include<sstream>
-std::shared_ptr<Model> Importer::LoadGLTFModel(const std::string& Dir, const std::string& FileName)
+std::shared_ptr<Model> Importer::LoadGLTFModel(const std::string& Dir, const std::string& FileName, const std::string& Ext)
 {
 	printf("glTFロード\nDir : %s , FileName : %s\n", Dir.c_str(), FileName.c_str());
 	std::shared_ptr<Model>result = std::make_shared<Model>(Dir, FileName);
@@ -1198,10 +1194,6 @@ std::shared_ptr<Model> Importer::LoadGLTFModel(const std::string& Dir, const std
 	auto reader = std::make_unique<StreamReader>(modelFilePath.parent_path());
 	auto stream = reader->GetInputStream(modelFilePath.filename().u8string());
 
-	//拡張子 ".gltf" ".glb" の判定
-	std::experimental::filesystem::path pathFile = modelFilePath.filename();
-	std::experimental::filesystem::path pathFileExt = pathFile.extension();
-
 	std::string manifest;
 
 	auto MakePathExt = [](const std::string& ext)
@@ -1211,7 +1203,7 @@ std::shared_ptr<Model> Importer::LoadGLTFModel(const std::string& Dir, const std
 
 	std::unique_ptr<Microsoft::glTF::GLTFResourceReader> resourceReader;
 
-	if (pathFileExt == MakePathExt(Microsoft::glTF::GLTF_EXTENSION))
+	if (Ext == MakePathExt(Microsoft::glTF::GLTF_EXTENSION))
 	{
 		auto gltfResourceReader = std::make_unique<Microsoft::glTF::GLTFResourceReader>(std::move(reader));
 
@@ -1223,7 +1215,7 @@ std::shared_ptr<Model> Importer::LoadGLTFModel(const std::string& Dir, const std
 
 		resourceReader = std::move(gltfResourceReader);
 	}
-	else if (pathFileExt == MakePathExt(Microsoft::glTF::GLB_EXTENSION))
+	else if (Ext == MakePathExt(Microsoft::glTF::GLB_EXTENSION))
 	{
 		auto glbResourceReader = std::make_unique<Microsoft::glTF::GLBResourceReader>(std::move(reader), std::move(stream));
 
@@ -1352,4 +1344,24 @@ std::shared_ptr<Model> Importer::LoadGLTFModel(const std::string& Dir, const std
 	}
 
 	return result;
+}
+
+std::shared_ptr<Model> Importer::LoadModel(const std::string& Dir, const std::string& FileName)
+{
+	//拡張子取得
+	const auto ext = "." + KuroFunc::GetExtension(FileName);
+
+	if (ext == ".fbx" || ext == ".FBX")
+	{
+		return LoadFBXModel(Dir, FileName, ext);
+	}
+	else if (ext == ".glb" || ext == "gltf")
+	{
+		return LoadGLTFModel(Dir, FileName, ext);
+	}
+	else
+	{
+		ErrorMessage("LoadModel", true, "対応していない拡張子です\n");
+	}
+	return std::shared_ptr<Model>();
 }

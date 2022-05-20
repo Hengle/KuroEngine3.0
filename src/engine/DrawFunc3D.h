@@ -5,6 +5,7 @@
 #include"Transform.h"
 #include<memory>
 #include"Camera.h"
+#include"Object.h"
 
 class Model;
 class LightManager;
@@ -37,10 +38,30 @@ public:
 	static void DrawLine(Camera& Cam, const Vec3<float>& From, const Vec3<float>& To, const Color& LineColor, const float& Thickness, const AlphaBlendMode& BlendMode = AlphaBlendMode_Trans);
 	//’Êí•`‰æ
 	static void DrawNonShadingModel(const std::weak_ptr<Model>Model, Transform& Transform, Camera& Camera, const AlphaBlendMode& BlendMode = AlphaBlendMode_Trans);
+	static void DrawNonShadingModel(const std::weak_ptr<ModelObject>ModelObject, Camera& Camera, const AlphaBlendMode& BlendMode = AlphaBlendMode_Trans)
+	{
+		auto obj = ModelObject.lock();
+		DrawNonShadingModel(obj->model, obj->transform, Camera, BlendMode);
+	}
 	//‰e‚Â‚«•`‰æ
 	static void DrawADSShadingModel(LightManager& LigManager, const std::weak_ptr<Model>Model, Transform& Transform, Camera& Cam, const AlphaBlendMode& BlendMode = AlphaBlendMode_Trans);
+	static void DrawADSShadingModel(LightManager& LigManager, const std::weak_ptr<ModelObject>ModelObject, Camera& Cam, const AlphaBlendMode& BlendMode = AlphaBlendMode_Trans)
+	{
+		auto obj = ModelObject.lock();
+		DrawADSShadingModel(LigManager, obj->model, obj->transform, Cam, BlendMode);
+	}
 	//‰e‚Â‚«•`‰æ(PBR)
 	static void DrawPBRShadingModel(LightManager& LigManager, const std::weak_ptr<Model>Model, Transform& Transform, Camera& Cam, const AlphaBlendMode& BlendMode = AlphaBlendMode_Trans);
+	static void DrawPBRShadingModel(LightManager& LigManager, const std::weak_ptr<ModelObject>ModelObject, Camera& Cam, const AlphaBlendMode& BlendMode = AlphaBlendMode_Trans)
+	{
+		auto obj = ModelObject.lock();
+		DrawPBRShadingModel(LigManager, obj->model, obj->transform, Cam, BlendMode);
+	}
 	//ƒgƒD[ƒ“ƒVƒF[ƒfƒBƒ“ƒO
 	static void DrawToonModel(const std::weak_ptr<TextureBuffer>ToonTex, LightManager& LigManager, const std::weak_ptr<Model>Model, Transform& Transform, Camera& Cam, const AlphaBlendMode& BlendMode = AlphaBlendMode_Trans);
+	static void DrawToonModel(const std::weak_ptr<TextureBuffer>ToonTex, LightManager& LigManager, const std::weak_ptr<ModelObject>ModelObject, Camera& Cam, const AlphaBlendMode& BlendMode = AlphaBlendMode_Trans)
+	{
+		auto obj = ModelObject.lock();
+		DrawToonModel(ToonTex, LigManager, obj->model, obj->transform, Cam, BlendMode);
+	}
 };
