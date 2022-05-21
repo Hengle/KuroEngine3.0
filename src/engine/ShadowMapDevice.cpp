@@ -150,7 +150,7 @@ void ShadowMapDevice::DrawShadowReceiver(const std::vector<std::weak_ptr<ModelOb
 					GameCamera.GetBuff(),
 					TRANSFORM_BUFF[i],
 					mesh.material->texBuff[COLOR_TEX],
-					shadowMap,
+					gaussianBlur->GetResultTex(),
 					lightCamera.GetBuff()
 				},
 				{ CBV,CBV,SRV,SRV,CBV },
