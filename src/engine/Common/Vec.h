@@ -290,7 +290,7 @@ struct Vec3
 	operator DirectX::XMVECTOR() const
 	{
 		static_assert(std::is_floating_point<T>::value, "template parameter T must be floating type");
-		return DirectX::XMLoadFloat3(&vec);
+		return DirectX::XMLoadFloat3((DirectX::XMFLOAT3*)this);
 	}
 	DirectX::XMFLOAT3* operator&()
 	{

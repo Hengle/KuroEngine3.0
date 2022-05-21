@@ -85,10 +85,17 @@ void Camera::CameraInfoUpdate()
 		cameraInfo.billboardMatY.r[2] = ybillCameraAxisZ;
 		cameraInfo.billboardMatY.r[3] = XMVectorSet(0, 0, 0, 1);
 
-		cameraInfo.matProjection = XMMatrixPerspectiveFovLH(
-			angleOfView,								//画角
-			WinApp::Instance()->GetAspect(),	//アスペクト比
-			nearZ, farZ);		//前端、奥端
+		if (projMatMode == Perspective)
+		{
+			cameraInfo.matProjection = XMMatrixPerspectiveFovLH(
+				angleOfView,								//画角
+				WinApp::Instance()->GetAspect(),	//アスペクト比
+				nearZ, farZ);		//前端、奥端
+		}
+		else
+		{
+			cameraInfo.matProjection = DirectX::XMMatrixOrthographicLH(width, height, nearZ, farZ);
+		}
 
 		buff->Mapping(&cameraInfo);
 
