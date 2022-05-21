@@ -110,7 +110,7 @@ Angle KuroFunc::GetAngle(Vec2<float> From, Vec2<float> To)
 
 Vec2<float> KuroFunc::ConvertWorldToScreen(Vec3<float> WorldPos, const Matrix& ViewMat, const Matrix& ProjMat, const Vec2<int>& WinSize)
 {
-	XMVECTOR pos = XMLoadFloat3(&WorldPos.ConvertXMFLOAT3());
+	XMVECTOR pos = XMLoadFloat3(&WorldPos);
 	//ビュー行列適応
 	pos = XMVector3Transform(pos, ViewMat);
 	//プロジェクション行列適応

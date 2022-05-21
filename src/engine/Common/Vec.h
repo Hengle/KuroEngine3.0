@@ -4,6 +4,7 @@
 #define VEC_H
 
 #include<DirectXMath.h>
+#include<type_traits>
 
 template<typename T>
 struct Vec2
@@ -161,9 +162,6 @@ struct Vec3
 		Vec3<float> vec = To - *this;
 		return *this + vec.GetNormal() * distHalf;
 	}
-	DirectX::XMFLOAT3 ConvertXMFLOAT3() {
-		return DirectX::XMFLOAT3(x, y, z);
-	};
 	Vec3<int>Int()const { return Vec3<int>(x, y, z); }
 	Vec3<float>Float()const { return Vec3<float>((float)x, (float)y, (float)z); }
 
@@ -182,6 +180,18 @@ struct Vec3
 	bool IsZero() 
 	{
 		return x == 0 && y == 0 && z == 0;
+	}
+	void Max(const Vec3<T>&rhs)
+	{
+		x = std::max(x, rhs.x);
+		y = std::max(y, rhs.y);
+		z = std::max(z, rhs.z);
+	}
+	void Min(const Vec3<T>& rhs)
+	{
+		x = std::min(x, rhs.x);
+		y = std::min(y, rhs.y);
+		z = std::min(z, rhs.z);
 	}
 
 #pragma region オペレーター演算子
@@ -271,6 +281,21 @@ struct Vec3
 		if (Idx == 1)return this->y;
 		if (Idx == 2)return this->z;
 		assert(0);
+	}
+	operator DirectX::XMFLOAT3()const
+	{
+		static_assert(std::is_floating_point<T>::value, "template parameter T must be floating type");
+		return DirectX::XMFLOAT3(x, y, z);
+	}
+	operator DirectX::XMVECTOR() const
+	{
+		static_assert(std::is_floating_point<T>::value, "template parameter T must be floating type");
+		return DirectX::XMLoadFloat3(&vec);
+	}
+	DirectX::XMFLOAT3* operator&()
+	{
+		static_assert(std::is_floating_point<T>::value, "template parameter T must be floating type");
+		return (DirectX::XMFLOAT3*)this;
 	}
 
 #pragma endregion

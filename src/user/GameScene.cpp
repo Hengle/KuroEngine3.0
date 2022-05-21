@@ -8,10 +8,10 @@
 #include"Object.h"
 #include"GaussianBlur.h"
 
-GameScene::GameScene() :lightCamera("LightCamera")
+GameScene::GameScene()
 {
 	skyDome = Importer::Instance()->LoadModel("resource/user/", "skydome.glb");
-	floor = Importer::Instance()->LoadModel("resource/user/", "floor.glb");
+	floor = std::make_shared<ModelObject>("resource/user/", "floor.glb");
 	testModel = std::make_shared<ModelObject>("resource/user/", "player.glb");
 	testModel->model->MeshSmoothing();
 	testModel->transform.SetPos({ 0,1.5f,0 });
@@ -23,16 +23,6 @@ GameScene::GameScene() :lightCamera("LightCamera")
 
 	//trans.SetRotate(Vec3<Angle>(-90, 0, 0));
 	//trans.SetScale(0.3f);
-
-	//シャドウマップ関連
-	shadowMap = D3D12App::Instance()->GenerateRenderTarget(DXGI_FORMAT_R32G32_FLOAT, Color(), { 2048,2048 }, L"ShadowMap");
-	shadowMapDepth = D3D12App::Instance()->GenerateDepthStencil({ 2048,2048 });
-	lightCamera.SetPos({ 0, 10, 0 });
-	lightCamera.SetTarget({ 0,0,0 });
-	lightCamera.SetUp({ 1,0,0 });
-	lightCamera.SetAngleOfView(Angle(60));
-
-	gaussianBlur = std::make_shared<GaussianBlur>(Vec2<int>(2048, 2048), DXGI_FORMAT_R32G32_FLOAT);
 }
 
 void GameScene::OnInitialize()
@@ -120,18 +110,13 @@ void GameScene::OnDraw()
 		D3D12App::Instance()->GetBackBuffRenderTarget()->GetGraphSize());
 
 	dsv->Clear(D3D12App::Instance()->GetCmdList());
-	shadowMap->Clear(D3D12App::Instance()->GetCmdList());
-	shadowMapDepth->Clear(D3D12App::Instance()->GetCmdList());
 
-	//シャドウマップ書き込み
-	KuroEngine::Instance().Graphics().SetRenderTargets({ shadowMap }, shadowMapDepth);
-	DrawFunc3D::DrawShadowMapModel(testModel->model, testModel->transform, lightCamera);
-	gaussianBlur->Register(shadowMap);
+	shadowMapDevice.DrawShadowMap({ testModel });
 
 	//標準描画
 	KuroEngine::Instance().Graphics().SetRenderTargets({ D3D12App::Instance()->GetBackBuffRenderTarget() }, dsv);
 	DrawFunc3D::DrawNonShadingModel(skyDome, trans, debugCam);
-	DrawFunc3D::DrawShadowFallModel(gaussianBlur->GetResultTex(), lightCamera, floor, trans, debugCam);
+	shadowMapDevice.DrawShadowReceiver({ floor }, debugCam);
 	//DrawFunc3D::DrawADSShadingModel(ligMgr, floor, trans, debugCam);
 	DrawFunc3D::DrawADSShadingModel(ligMgr, testModel, debugCam);
 }

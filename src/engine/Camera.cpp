@@ -2,24 +2,18 @@
 #include"D3D12App.h"
 #include"WinApp.h"
 
-Camera::Camera(const std::string& Name) : name(Name)
-{
-	buff = D3D12App::Instance()->GenerateConstantBuffer(sizeof(ConstData), 1, &ConstData(), Name.c_str());
-}
-
-const std::shared_ptr<ConstantBuffer>& Camera::GetBuff()
+void Camera::CameraInfoUpdate()
 {
 	if (dirty)
 	{
-		ConstData cameraInfo;
 		cameraInfo.eye = pos;
 
 		//視点座標
-		XMVECTOR eyePosition = XMLoadFloat3(&cameraInfo.eye.ConvertXMFLOAT3());
+		XMVECTOR eyePosition = XMLoadFloat3(&cameraInfo.eye);
 		//注視点座標
-		XMVECTOR targetPosition = XMLoadFloat3(&target.ConvertXMFLOAT3());
+		XMVECTOR targetPosition = XMLoadFloat3(&target);
 		//（仮の）上方向
-		XMVECTOR upVector = XMLoadFloat3(&up.ConvertXMFLOAT3());
+		XMVECTOR upVector = XMLoadFloat3(&up);
 
 		//カメラZ軸（視線方向）
 		XMVECTOR cameraAxisZ = XMVectorSubtract(targetPosition, eyePosition);
@@ -94,12 +88,35 @@ const std::shared_ptr<ConstantBuffer>& Camera::GetBuff()
 		cameraInfo.matProjection = XMMatrixPerspectiveFovLH(
 			angleOfView,								//画角
 			WinApp::Instance()->GetAspect(),	//アスペクト比
-			0.1f, 3000.0f);		//前端、奥端
+			nearZ, farZ);		//前端、奥端
 
 		buff->Mapping(&cameraInfo);
 
+		viewInvMat = XMMatrixInverse(nullptr, cameraInfo.matView);
+
 		dirty = false;
 	}
+}
 
+Camera::Camera(const std::string& Name) : name(Name)
+{
+	buff = D3D12App::Instance()->GenerateConstantBuffer(sizeof(ConstData), 1, &ConstData(), Name.c_str());
+}
+
+const std::shared_ptr<ConstantBuffer>& Camera::GetBuff()
+{
+	CameraInfoUpdate();
 	return buff;
+}
+
+const Vec3<float>Camera::GetForward()
+{
+	CameraInfoUpdate();
+	return Vec3<float>(viewInvMat.r[2].m128_f32[0], viewInvMat.r[2].m128_f32[1], viewInvMat.r[2].m128_f32[2]);
+}
+
+const Vec3<float>Camera::GetRight()
+{
+	CameraInfoUpdate();
+	return Vec3<float>(viewInvMat.r[0].m128_f32[0], viewInvMat.r[0].m128_f32[1], viewInvMat.r[0].m128_f32[2]);
 }

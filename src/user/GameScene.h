@@ -4,6 +4,7 @@
 #include"LightManager.h"
 #include"Transform.h"
 #include<array>
+#include"ShadowMapDevice.h"
 
 class Model;
 class ModelObject;
@@ -12,7 +13,7 @@ class GaussianBlur;
 class GameScene : public BaseScene
 {
 	std::shared_ptr<Model>skyDome;
-	std::shared_ptr<Model>floor;
+	std::shared_ptr<ModelObject>floor;
 	std::shared_ptr<ModelObject>testModel;
 
 	DebugCamera debugCam;
@@ -21,11 +22,7 @@ class GameScene : public BaseScene
 	Light::Point ptLig;
 	Light::HemiSphere hemiLig;
 	Transform trans;
-
-	std::shared_ptr<RenderTarget>shadowMap;
-	std::shared_ptr<DepthStencil>shadowMapDepth;
-	Camera lightCamera;
-	std::shared_ptr<GaussianBlur> gaussianBlur;
+	ShadowMapDevice shadowMapDevice;
 public:
 	GameScene();
 	void OnInitialize()override;

@@ -22,8 +22,6 @@ static class DrawFunc3D
 	static int DRAW_PBR_SHADING_COUNT;
 	//DrawToonModel
 	static int DRAW_TOON_COUNT;	
-	//DrawShadowMapModel
-	static int DRAW_SHADOW_MAP_COUNT;
 	//DrawShadowFallModel
 	static int DRAW_SHADOW_FALL_COUNT;
 
@@ -36,7 +34,6 @@ public:
 		DRAW_ADS_SHADING_COUNT = 0;
 		DRAW_PBR_SHADING_COUNT = 0;
 		DRAW_TOON_COUNT = 0;
-		DRAW_SHADOW_MAP_COUNT = 0;
 		DRAW_SHADOW_FALL_COUNT = 0;
 	}
 
@@ -70,9 +67,4 @@ public:
 		auto obj = ModelObject.lock();
 		DrawToonModel(ToonTex, LigManager, obj->model, obj->transform, Cam, BlendMode);
 	}
-
-	//シャドウマップに書き込み
-	static void DrawShadowMapModel(const std::weak_ptr<Model>Model, Transform& Transform, Camera& LightCam);
-	//シャドウマップを使って影を落とす
-	static void DrawShadowFallModel(const std::weak_ptr<TextureBuffer>ShadowMap, Camera& LightCam, const std::weak_ptr<Model>Model, Transform& Transform, Camera& GameCamera, const AlphaBlendMode& BlendMode = AlphaBlendMode_Trans);
 };

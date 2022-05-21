@@ -10,21 +10,26 @@ class Camera
 	class ConstData
 	{
 	public:
-		Matrix matView; // ビュープロジェクション行列
-		Matrix matProjection;
+		Matrix matView; // ビュー行列
+		Matrix matProjection;	//プロジェクション行列
 		Vec3<float> eye; // カメラ座標（ワールド座標）
 		Matrix billboardMat;
 		Matrix billboardMatY;
-	};
+	}cameraInfo;
 	std::shared_ptr<ConstantBuffer>buff;
 
 	Vec3<float>pos = { 0,0,-10 };
 	Vec3<float>target = { 0,0,0 };
 	Vec3<float>up = { 0,1,0 };
 	Angle angleOfView = Angle(60);	//画角
+	float nearZ = 0.1f;
+	float farZ = 3000.0f;
+
+	Matrix viewInvMat; //ビュー行列の逆行列
 
 	//マッピングの判断用ダーティフラグ
 	bool dirty = true;
+	void CameraInfoUpdate();
 
 public:
 	const std::string name;
@@ -57,6 +62,12 @@ public:
 	const Vec3<float>& GetUp() { return up; }
 	const Vec3<float>& GetTarget() { return target; }
 	const Angle& GetAngleOfView() { return angleOfView; }
+	const Matrix& GetViewMat() { CameraInfoUpdate(); return cameraInfo.matView; }
+	const Matrix& GetProjectionMat() { CameraInfoUpdate(); return cameraInfo.matProjection; }
+	const Vec3<float>GetForward();
+	const Vec3<float>GetRight();
+	const float& GetNearZ() { return nearZ; }
+	const float& GetFarZ() { return farZ; }
 
 	const std::shared_ptr<ConstantBuffer>&GetBuff();
 };
